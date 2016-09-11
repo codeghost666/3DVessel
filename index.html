@@ -4,14 +4,19 @@
 		<meta charset=utf-8>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-				<title>BAPLIE Viewer Online - 3D Vessel</title>
-        <link rel="stylesheet" href="system/css/styles.css" />
+		<title>3D ship containers</title>
+		<link rel="stylesheet" href="system/css/styles.css" />
 	</head>
 	<body>
         <!-- --------------------------
            Developed by www.saants.es
         --------------------------- -->
-        <div id="container" class="container"></div>
+        <div id="app-3d"" class="app3d-main-panel"
+            data-gpu="It seems that your graphic card does not support WebGL. Without it we cannot show you the 3D Vessel Content.<br />Try using another browser."
+            data-webgl="Your browser does not support WebGL. Without it we cannot show you the 3D Vessel Content.<br />Only for modern browsers & IE11+">
+        </div>
+        <img id="img-loader-logo" class="hidden" src="system/images/logo.png" />
+        
         <h1 id="titleH1" class="titleH1"></h1>
         <h2 id="titleBay" class="titleBay"></h2>
         <span id="open-panel" class="open-close-panel noselect">
@@ -30,7 +35,7 @@
             <div class="filtering">
                 <h3>Filter containers by:</h3>
                 <select id="dropFilter"></select>
-                <select id="dropFilterValue" disabled><option value=''>No Filter</option></select>
+                <select id="dropFilterValue" disabled><option value=''>Show all</option></select>
                 <input id="showWireframesFiltered" checked type="checkbox" /> <label for="showWireframesFiltered" class="noselect">Show wireframes</label>
             </div>
             <div class="coloring">
@@ -39,7 +44,7 @@
                 <ul id="tableColors"></ul>
             </div>
             <div class="instructions">
-                Press [ESC] to return to the initial view.
+            Press [ESC] to return to the initial view.
             </div>            
         </div>
         <div id="bay-panel" class="bay-panel">
@@ -48,13 +53,6 @@
             </span>
             <div id="bay-table-container" class="table-container"></div>
         </div>    
-        <div id="no-rendering" class="no-rendering"
-         data-gpu="It seems that your graphic card does not support WebGL. Without it we cannot show you the 3D Vessel Content.<br />Try using another browser."
-         data-webgl="Your browser does not support WebGL. Without it we cannot show you the 3D Vessel Content..<br />Only compatible with modern browsers such as Safari, Chrome & Firefox.<br />Also compatible with Internet Explorer version 11+"></div>
-        <div id="loading-div" class="loading-div">
-            <div id="messages" class="messages">loading the 3D model...</div>
-            <img src="system/images/logo.png" alt="loading" class="logo-img" />
-        </div>
         
         <div id="tracer" class="tracer"> </div>
         <form id="posted-values" class="posted-values">
@@ -62,6 +60,18 @@
             <input type="hidden" name="bay" id="bay" />            
         </form>
         
-		<script src="system/js/min/app-min.js"></script>
+		<!--[if IE]>
+    	<script src="system/lib/js/polyfills/browser-polyfill.min.js"></script>
+		<script src="system/lib/js/polyfills/es6-promise.js"></script>
+		<![endif]-->
+        <script src="system/lib/js/underscore/underscore-min.js"></script>
+        <script src="system/lib/js/greensock/minified/TweenLite.min.js"></script>
+        <script src="system/lib/js/greensock/minified/easing/EasePack.min.js"></script>
+        <script src="system/lib/js/greensock/minified/plugins/CSSPlugin.min.js"></script>
+        <script src="system/lib/js/three/three.min.js"></script>
+        <script src="system/lib/js/three/controls/OrbitControls.js"></script>
+        <script src="system/lib/js/three/Detector.js"></script>
+        <script src="system/js/build/app3d.js"></script>
+
 	</body>
 </html>
