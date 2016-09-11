@@ -137,7 +137,7 @@ controlsControl = {
 
     prepareFilter: function (e) {
         var v = e.target.value, key, currentFilter, 
-            opts = [ "<option value=''>Show all</option>"],
+            opts = [ "<option value=''>No filter</option>"],
             me = controlsControl,
             filters = app3d.data.filters;
         
