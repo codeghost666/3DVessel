@@ -47,6 +47,8 @@ export class DataLoader {
                     }
                 }//transferComplete
 
+                me.divLoading.show();
+
                 if (!jsonUrl) {
                     reject(i18labels.INVALID_DATA_SOURCE);
                     return;

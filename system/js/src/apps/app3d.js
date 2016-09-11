@@ -59,6 +59,8 @@ controlsControl = {
         __d__.addEventLnr(window, "keydown", me.checkKeyPressed);
 
         me.addBaysControl();
+        me.addHouseControl();
+        me.pauseControls(false);
 
     },
 
@@ -110,10 +112,7 @@ controlsControl = {
         __d__.addEventLnr(me.openBayInfo, "click", me.showBayInfo);
         __d__.addEventLnr(me.closeBayInfo, "click", me.showBayInfo);
         me.openBayInfo.style.left = "-300px";
-        
-        me.addHouseControl();
-        me.pauseControls(false);
-        
+                
     },
 
     addHouseControl: function () {
@@ -124,7 +123,7 @@ controlsControl = {
         
         bays = __s__.objKeysToArray(me.dropBaysDictionary);
         bays = bays.sort(__s__.sortNumeric);
-        for(j = 1, lenJ = bays.length; j < lenJ; j += 1) {
+        for(j = bays.length - 1; j >= 0; j -= 1) {
             key = bays[j];
             if (dataStructured[key].maxD > 20) {
                 lis.push("<option value='" + me.dropBaysDictionary[key] + "'>before " + key +"</option>");
@@ -649,7 +648,7 @@ controlsControl = {
 //Initialize
 app3d = new scene.VesselsApp3D(node, titleNode, infoNode, bayNode);
 //LoadUrl
-app3d.loadUrl(queryParams.json || "/system/json/ZIM_Rotterdam.js", i18labels.LOADING_DATA)
+app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA)
     .then(
         function(loadedData) {
             let renderer3d = app3d.renderer3d,
@@ -689,10 +688,10 @@ app3d.loadUrl(queryParams.json || "/system/json/ZIM_Rotterdam.js", i18labels.LOA
             renderer3d.controls.target.z = maxDepthHalf;
             controlsControl.initialCameraPosition.targetZ = maxDepthHalf;
 
-        })/*
+        })
         .catch(function(msg) {
             app3d._node.loadingDiv.setMessage(msg, true);
             app3d._node.loadingDiv.updateLoader(0.0, 1.0);
-        })*/;
+        });
 
 window.appVessels3D = app3d;

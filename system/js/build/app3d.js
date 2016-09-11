@@ -64,6 +64,8 @@ controlsControl = {
         __d__.addEventLnr(window, "keydown", me.checkKeyPressed);
 
         me.addBaysControl();
+        me.addHouseControl();
+        me.pauseControls(false);
     },
 
     addBaysControl: function addBaysControl() {
@@ -120,9 +122,6 @@ controlsControl = {
         __d__.addEventLnr(me.openBayInfo, "click", me.showBayInfo);
         __d__.addEventLnr(me.closeBayInfo, "click", me.showBayInfo);
         me.openBayInfo.style.left = "-300px";
-
-        me.addHouseControl();
-        me.pauseControls(false);
     },
 
     addHouseControl: function addHouseControl() {
@@ -137,7 +136,7 @@ controlsControl = {
 
         bays = __s__.objKeysToArray(me.dropBaysDictionary);
         bays = bays.sort(__s__.sortNumeric);
-        for (j = 1, lenJ = bays.length; j < lenJ; j += 1) {
+        for (j = bays.length - 1; j >= 0; j -= 1) {
             key = bays[j];
             if (dataStructured[key].maxD > 20) {
                 lis.push("<option value='" + me.dropBaysDictionary[key] + "'>before " + key + "</option>");
@@ -152,7 +151,7 @@ controlsControl = {
         var v = e.target.value,
             key,
             currentFilter,
-            opts = ["<option value=''>Show all</option>"],
+            opts = ["<option value=''>No filter</option>"],
             me = controlsControl,
             filters = app3d.data.filters;
 
@@ -730,7 +729,7 @@ controlsControl = {
 //Initialize
 app3d = new scene.VesselsApp3D(node, titleNode, infoNode, bayNode);
 //LoadUrl
-app3d.loadUrl(queryParams.json || "/system/json/ZIM_Rotterdam.js", i18labels.LOADING_DATA).then(function (loadedData) {
+app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA).then(function (loadedData) {
     var renderer3d = app3d.renderer3d,
         modelsFactory = app3d.modelsFactory,
         maxDepth = undefined,
@@ -770,13 +769,12 @@ app3d.loadUrl(queryParams.json || "/system/json/ZIM_Rotterdam.js", i18labels.LOA
     renderer3d.controls.maxDistance = maxDepth * 1.5;
     renderer3d.controls.target.z = maxDepthHalf;
     controlsControl.initialCameraPosition.targetZ = maxDepthHalf;
+})['catch'](function (msg) {
+    app3d._node.loadingDiv.setMessage(msg, true);
+    app3d._node.loadingDiv.updateLoader(0.0, 1.0);
 });
 
-/*
-.catch(function(msg) {
-  app3d._node.loadingDiv.setMessage(msg, true);
-  app3d._node.loadingDiv.updateLoader(0.0, 1.0);
-})*/window.appVessels3D = app3d;
+window.appVessels3D = app3d;
 
 },{"../core/i18labels.js":3,"../core/vessels-3d.js":6,"../utils/dom-utilities.js":7,"../utils/js-helpers.js":8}],2:[function(require,module,exports){
 'use strict';
@@ -840,6 +838,8 @@ var DataLoader = (function () {
                         reject(i18labels.ERROR_PARSING_JSON + " " + e.description);
                     }
                 } //transferComplete
+
+                me.divLoading.show();
 
                 if (!jsonUrl) {
                     reject(i18labels.INVALID_DATA_SOURCE);
