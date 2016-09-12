@@ -85,11 +85,18 @@ export class DataLoader {
             data, dataStructured, filters,
             iTierMin, iTierMinAbove,
             maxWidth = 0,
+            numContsByBay = {},
             containersIDs = {}, allContainerMeshesObj = {};
             
         function addStructured(ob) {
             let bay2 = ob.bay, ibay = ob.iBay;
-            if (ibay % 2 === 0) { bay2 = __s__.pad(ibay - 1, 3)} 
+            if (ibay % 2 === 0) { bay2 = __s__.pad(ibay - 1, 3)}
+
+            if (!numContsByBay[ob.bay]) {
+                numContsByBay[ob.bay] = 1;
+            } else {
+                numContsByBay[ob.bay] += 1;
+            }
             
             if (!dataStructured[bay2]) {
                 dataStructured[bay2] = { cells: {}, n: 0};
@@ -197,11 +204,14 @@ export class DataLoader {
             belowTiers,
             aboveTiers,
             containersIDs,
+            numContsByBay,
             allContainerMeshesObj,
             filters,
             iTierMin,
             iTierMinAbove,
-            maxWidth
+            maxWidth,
+            firstBay: _.min(_.keys(dataStructured)),
+            lastBay: _.max(_.keys(dataStructured))
         };                           
                     
     }

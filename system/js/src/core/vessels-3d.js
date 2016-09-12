@@ -23,6 +23,7 @@ export class VesselsApp3D {
             colors: { background: 0xd2eef8, sunlight: 0xe2e2ee },
             dampingFactorOut: 0.2, dampingFactorIn: 0.75,
             initialCameraPosition: { x: 0, y: 0, z: 100}, 
+            labelScale: 8,
             screenshots : { width: 600, height: 600, format: "png", transparent: true }
         }, opts);
 

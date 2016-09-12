@@ -108,6 +108,33 @@ canvas {
   text-align: center;
   cursor: pointer; }
 
+.prevnext-container {
+  display: none; }
+
+.prevnext {
+  position: absolute;
+  top: 50%;
+  width: 90px;
+  height: 50px;
+  line-height: 50px;
+  z-index: 100;
+  border-radius: 3px;
+  background: #999;
+  color: #fff;
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase; }
+  .prevnext.active {
+    background: #444;
+    cursor: pointer; }
+  .prevnext.bay-prev {
+    left: 20px; }
+  .prevnext.bay-next {
+    right: 20px; }
+  .prevnext:hover {
+    background: #000; }
+
 .bay-panel {
   position: absolute;
   top: 0;
@@ -195,11 +222,11 @@ canvas {
   z-index: 30;
   transform: translate3d(0, 0, 0);
   overflow-y: scroll; }
-  .info-panel .info-window, .info-panel .coloring, .info-panel .filtering, .info-panel .instructions, .info-panel .onlybay, .info-panel .add-house {
+  .info-panel .info-window, .info-panel .coloring, .info-panel .filtering, .info-panel .instructions, .info-panel .onlybay, .info-panel .add-house, .info-panel .expand-view {
     width: 100%;
     padding: 5px 7px;
     box-sizing: border-box; }
-    .info-panel .info-window h3, .info-panel .coloring h3, .info-panel .filtering h3, .info-panel .instructions h3, .info-panel .onlybay h3, .info-panel .add-house h3 {
+    .info-panel .info-window h3, .info-panel .coloring h3, .info-panel .filtering h3, .info-panel .instructions h3, .info-panel .onlybay h3, .info-panel .add-house h3, .info-panel .expand-view h3 {
       font-size: 12px;
       margin: 0;
       font-style: italic; }
@@ -211,6 +238,12 @@ canvas {
     .info-panel .info-window small {
       font-size: 70%;
       color: #ccc; }
+  .info-panel .expand-view {
+    background: #4b19a8;
+    color: #fff;
+    padding-bottom: 3px;
+    font-size: 12px;
+    text-transform: uppercase; }
   .info-panel .add-house {
     background: #333333;
     color: #fff;

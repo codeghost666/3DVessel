@@ -23,12 +23,17 @@ controlsControl = {
     latestFilter: "",
     dropBays: null,
     dropBaysDictionary: {},
+    dropAddHouse: null,
     openBayInfo: null,
     closeBayInfo: null,
     bayInfo: null,
     bayInfoTable: null,
     baySelected: "",
     shipHouseSpace: 20.5,
+    isExpanded: false,
+    prevnextCont: null,
+    prevnextNum: 1,
+    numContsByBlock: null,
 
     init: function init() {
         var ctrlColors = document.getElementById("dropColors"),
@@ -40,6 +45,8 @@ controlsControl = {
 
         me.dropFilterValue = document.getElementById("dropFilterValue");
         me.showWireframes = document.getElementById("showWireframesFiltered");
+        me.expandViewBtn = document.getElementById("expandView");
+        me.prevnextCont = document.getElementById("prevnext-container");
         me.dropFilter = ctrlFilter;
 
         opt = document.createElement("option");
@@ -62,6 +69,10 @@ controlsControl = {
         __d__.addEventLnr(ctrlColors, "change", me.colorize);
         __d__.addEventLnr(me.showWireframes, "change", me.listenWireframeDisplay);
         __d__.addEventLnr(window, "keydown", me.checkKeyPressed);
+        __d__.addEventLnr(me.expandViewBtn, "change", me.expandView);
+
+        __d__.addEventLnr(document.getElementById("bay-next"), "click", me.expandViewNext);
+        __d__.addEventLnr(document.getElementById("bay-prev"), "click", me.expandViewPrev);
 
         me.addBaysControl();
         me.addHouseControl();
@@ -82,6 +93,7 @@ controlsControl = {
             me = controlsControl,
             iBay,
             g3Bays = app3d.renderer3d.g3Bays,
+            dataStructured = app3d.data.dataStructured,
             lis = ["<option value=''>All bays</option>"];
 
         function changeBay(ev) {
@@ -99,8 +111,10 @@ controlsControl = {
             iBay = Number(bays[j]);
             oddB = iBay % 2 === 1;
             if (oddB) {
-                lis.push("<option value='" + bays[j] + "'>" + bays[j] + "</option>");
-                me.dropBaysDictionary[bays[j]] = bays[j];
+                if (dataStructured[bays[j]].n) {
+                    lis.push("<option value='" + bays[j] + "'>" + bays[j] + "</option>");
+                    me.dropBaysDictionary[bays[j]] = bays[j];
+                }
             } else {
                 prevOddExists = j + 1 < lenJ && Number(bays[j + 1]) === iBay + 1;
                 if (!prevOddExists && !me.dropBaysDictionary[__s__.pad(iBay - 1, 3)]) {
@@ -142,9 +156,10 @@ controlsControl = {
                 lis.push("<option value='" + me.dropBaysDictionary[key] + "'>before " + key + "</option>");
             }
         }
+
         dropAddHouse.innerHTML = lis.join("");
-        app3d.renderer3d.shipHouse.dropdown = dropAddHouse;
-        __d__.addEventLnr(dropAddHouse, "change", me.moveShipHouse);
+        __d__.addEventLnr(dropAddHouse, "change", me.moveShipHouseLnr);
+        me.dropAddHouse = dropAddHouse;
     },
 
     prepareFilter: function prepareFilter(e) {
@@ -290,6 +305,7 @@ controlsControl = {
             me.dropFilterValue.setAttribute("prevAttr", prevAttr);
             me.showWireframes.setAttribute("disabled", "disabled");
             me.dropBays.setAttribute("disabled", "disabled");
+            me.dropAddHouse.setAttribute("disabled", "disabled");
             return;
         }
         //else
@@ -300,6 +316,7 @@ controlsControl = {
         }
         me.showWireframes.removeAttribute("disabled");
         me.dropBays.removeAttribute("disabled");
+        me.dropAddHouse.removeAttribute("disabled");
     },
 
     colorize: function colorize(e) {
@@ -325,12 +342,13 @@ controlsControl = {
     },
 
     isolateBay: function isolateBay(sBay) {
+        var force = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
-        var iBay = Number(sBay),
+        var me = controlsControl,
+            iBay = Number(sBay),
             sepZ = 40,
-            topY = 400,
+            topY = 500,
             newZ,
-            me = controlsControl,
             dataStructured = app3d.data.dataStructured,
             filters = app3d.data.filters,
             g3Bays = app3d.renderer3d.g3Bays,
@@ -513,6 +531,7 @@ controlsControl = {
             bayMeven = g3Bays["b" + __s__.pad(iEvenBay, 3)];
             if (bayM) {
                 TweenLite.to(bayM.position, timing, { y: bayY, delay: 0.5, ease: Power2.easeInOut });
+                //bayM.labels.visible = !!bayY;
             }
             if (bayMeven) {
                 TweenLite.to(bayMeven.position, timing, { y: bayY, delay: 0.5, ease: Power2.easeInOut });
@@ -542,12 +561,15 @@ controlsControl = {
                 camPos = app3d.renderer3d.camera.position;
 
             me.pauseControls(true);
+            me.expandViewBtn.setAttribute("disabled", "disabled");
             opened = me.baySelected !== "";
             if (opened) {
                 //cerramos
                 animateBays(Number(me.baySelected), 0.35, 0, 0, 0);
                 //abrimos
-                if (iBay > 0) newZ = animateBays(iBay, 0.4, sepZ, .75, topY);
+                if (iBay > 0) {
+                    newZ = animateBays(iBay, 0.4, sepZ, .75, topY);
+                }
             } else {
                 //abrimos uno nuevo
                 newZ = animateBays(iBay, 1, sepZ, 0, topY);
@@ -562,6 +584,7 @@ controlsControl = {
                 delayUp = 0.5;
                 controls.dampingFactor = options.dampingFactorIn;
                 openBaypanelButtonZ = 30;
+                newZ += 11;
             } else {
                 me.baySelected = "";
                 camZ = me.initialCameraPosition.z;
@@ -577,16 +600,17 @@ controlsControl = {
             TweenLite.to(controls.target, 2.0, { y: cY, x: 0, z: newZ, ease: Power2.easeInOut });
             TweenLite.to(me.openBayInfo, 1.0, { left: openBaypanelButtonZ, delay: delayUp * 4, ease: Power2.easeInOut });
             setTimeout(function () {
+                me.expandViewBtn.removeAttribute("disabled");
                 me.pauseControls(false);
             }, 2500);
         }
 
         separateBay(!sBay ? "" : sBay);
         if (!!sBay) {
-            shipHouse.dropdown.setAttribute("disabled", "disabled");
+            me.dropAddHouse.setAttribute("disabled", "disabled");
             generateTable(iBay);
         } else {
-            shipHouse.dropdown.removeAttribute("disabled");
+            me.dropAddHouse.removeAttribute("disabled");
         }
     },
 
@@ -629,9 +653,13 @@ controlsControl = {
         }
     },
 
-    moveShipHouse: function moveShipHouse(ev) {
-        var v = ev.target.value,
-            key,
+    moveShipHouseLnr: function moveShipHouseLnr(ev) {
+        var v = ev.target.value;
+        controlsControl.moveShipHouse(v);
+    },
+
+    moveShipHouse: function moveShipHouse(v) {
+        var key,
             bayGroup,
             i,
             me = controlsControl,
@@ -684,6 +712,9 @@ controlsControl = {
 
         switch (e.keyCode) {
             case 27:
+                if (me.isExpanded) {
+                    return;
+                }
 
                 if (me.baySelected !== "") {
                     me.dropBays.value = "";
@@ -721,7 +752,172 @@ controlsControl = {
             }
         }
         tableColors.innerHTML = liColors.join("");
+    },
+
+    expandView: function expandView(ev) {
+        var me = controlsControl,
+            doExpand = ev.target.checked,
+            iBay = undefined,
+            g3Bay = undefined,
+            key = undefined,
+            j = undefined,
+            g3Bays = app3d.renderer3d.g3Bays,
+            dataStructured = app3d.data.dataStructured,
+            maxWidth = app3d.renderer3d.maxWidth,
+            extraSep = app3d.options.extraSep,
+            xAdd = maxWidth * (9.5 + extraSep) * 1.5,
+            xAccum = -xAdd,
+            visib = true,
+            lastBay = app3d.data.lastBay;
+
+        //Aggregates num of containers by block
+        function calculateContsByBlock() {
+            if (me.numContsByBlock) {
+                return;
+            }
+
+            var ncbb = {},
+                j = undefined,
+                numContsByBay = app3d.data.numContsByBay;
+
+            for (j = 1; j <= lastBay + 1; j += 1) {
+                key = __s__.pad(j, 3);
+                g3Bay = g3Bays["b" + key];
+                if (!g3Bay) {
+                    continue;
+                }
+                if (!ncbb[g3Bay.compactBlockNum]) {
+                    ncbb[g3Bay.compactBlockNum] = 0;
+                }
+                ncbb[g3Bay.compactBlockNum] += numContsByBay[key] || 0;
+            }
+            me.numContsByBlock = ncbb;
+        }
+
+        //Expands the bays horizontally
+        function expandBays() {
+            me.pauseControls(true);
+            if (me.baySelected !== "") {
+                me.openBayInfo.style.left = "-300px";
+            }
+
+            for (j = 1; j <= lastBay + 1; j += 1) {
+                key = __s__.pad(j, 3);
+                g3Bay = g3Bays["b" + key];
+
+                if (!g3Bay) {
+                    continue;
+                }
+
+                if (g3Bay.isBlockStart && me.numContsByBlock[g3Bay.compactBlockNum]) {
+                    xAccum += xAdd;
+                    g3Bay.labels.visible = true;
+                }
+
+                g3Bay.position.z = j & 1 && !g3Bay.isBlockStart ? 22.5 + extraSep : 0;
+                g3Bay.position.x = xAccum;
+                g3Bay.position.y = 0;
+            }
+
+            me.prevnextNum = 1;
+            app3d.renderer3d.simpleDeck.visible = false;
+            app3d.renderer3d.shipHouse.prevVisible = app3d.renderer3d.shipHouse.mesh.visible;
+            app3d.renderer3d.shipHouse.mesh.visible = false;
+            app3d.renderer3d.camera.position.set(0, app3d.data.aboveTiers.n * 14, xAdd);
+            app3d.renderer3d.controls.target.set(0, 0, 20);
+            me.prevnextCont.style.display = "block";
+        }
+
+        function contractBays() {
+            for (key in g3Bays) {
+                g3Bay = g3Bays[key];
+                g3Bay.position.z = g3Bay.originalZ;
+                g3Bay.position.x = 0;
+                g3Bay.position.y = 0;
+                if (g3Bay.labels) {
+                    g3Bay.labels.visible = false;
+                }
+            }
+
+            var ic = controlsControl.initialCameraPosition;
+            app3d.renderer3d.setCameraPosition(ic.x, ic.y, ic.z);
+            app3d.renderer3d.controls.target.x = 0;
+            app3d.renderer3d.controls.target.y = 0;
+            app3d.renderer3d.controls.target.z = ic.targetZ;
+
+            app3d.renderer3d.simpleDeck.visible = true;
+            app3d.renderer3d.shipHouse.mesh.visible = app3d.renderer3d.shipHouse.prevVisible;
+            me.prevnextCont.style.display = "none";
+            me.pauseControls(false);
+        }
+
+        calculateContsByBlock();
+        me.isExpanded = doExpand;
+
+        app3d.pauseRendering();
+        (doExpand ? expandBays : contractBays)();
+        app3d.resumeRendering();
+    },
+
+    expandViewNext: function expandViewNext() {
+        controlsControl.expandViewNextPrev(true);
+    },
+    expandViewPrev: function expandViewPrev() {
+        controlsControl.expandViewNextPrev(false);
+    },
+
+    expandViewNextPrev: function expandViewNextPrev(next) {
+        var me = controlsControl,
+            timing = 0.5,
+            key = undefined,
+            gBay = undefined,
+            newBlockNum = undefined,
+            g3Bays = app3d.renderer3d.g3Bays,
+            lastBay = app3d.data.lastBay;
+
+        var myXAnd = function myXAnd(a, b) {
+            return a ? b : !b;
+        };
+
+        function showBays() {
+            var g3Bay = undefined,
+                j = undefined;
+
+            newBlockNum = me.prevnextNum;
+            do {
+                newBlockNum = newBlockNum + (next ? 1 : -1);
+                if (newBlockNum <= 0 || newBlockNum > app3d.renderer3d.maxCompactBlockNums) {
+                    return null;
+                }
+            } while (me.numContsByBlock[newBlockNum] <= 0);
+
+            for (j = 1; j <= lastBay + 1; j += 1) {
+                key = __s__.pad(j, 3);
+                g3Bay = g3Bays["b" + key];
+
+                if (!g3Bay) {
+                    continue;
+                }
+                if (g3Bay.compactBlockNum === newBlockNum) {
+                    if (me.numContsByBlock[g3Bay.compactBlockNum]) {
+                        return g3Bay;
+                    }
+                }
+            }
+            return null;
+        }
+
+        gBay = showBays();
+        if (!gBay) {
+            return;
+        }
+
+        TweenLite.to(app3d.renderer3d.camera.position, timing, { x: gBay.position.x, ease: Power2.easeInOut });
+        TweenLite.to(app3d.renderer3d.controls.target, timing, { x: gBay.position.x, ease: Power2.easeInOut });
+
+        me.prevnextNum = newBlockNum;
     }
+
 }; //controlsControl
 
 /* Main program 3D ------------------------------------------------  */
@@ -776,7 +972,7 @@ app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA).then(function (loadedDat
 
 window.appVessels3D = app3d;
 
-},{"../core/i18labels.js":3,"../core/vessels-3d.js":6,"../utils/dom-utilities.js":7,"../utils/js-helpers.js":8}],2:[function(require,module,exports){
+},{"../core/i18labels.js":3,"../core/vessels-3d.js":6,"../utils/dom-utilities.js":10,"../utils/js-helpers.js":11}],2:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -891,6 +1087,7 @@ var DataLoader = (function () {
                 iTierMin = undefined,
                 iTierMinAbove = undefined,
                 maxWidth = 0,
+                numContsByBay = {},
                 containersIDs = {},
                 allContainerMeshesObj = {};
 
@@ -899,6 +1096,12 @@ var DataLoader = (function () {
                     ibay = ob.iBay;
                 if (ibay % 2 === 0) {
                     bay2 = __s__.pad(ibay - 1, 3);
+                }
+
+                if (!numContsByBay[ob.bay]) {
+                    numContsByBay[ob.bay] = 1;
+                } else {
+                    numContsByBay[ob.bay] += 1;
                 }
 
                 if (!dataStructured[bay2]) {
@@ -1031,11 +1234,14 @@ var DataLoader = (function () {
                 belowTiers: belowTiers,
                 aboveTiers: aboveTiers,
                 containersIDs: containersIDs,
+                numContsByBay: numContsByBay,
                 allContainerMeshesObj: allContainerMeshesObj,
                 filters: filters,
                 iTierMin: iTierMin,
                 iTierMinAbove: iTierMinAbove,
-                maxWidth: maxWidth
+                maxWidth: maxWidth,
+                firstBay: _.min(_.keys(dataStructured)),
+                lastBay: _.max(_.keys(dataStructured))
             };
         }
     }]);
@@ -1045,7 +1251,7 @@ var DataLoader = (function () {
 
 exports.DataLoader = DataLoader;
 
-},{"../utils/dom-utilities.js":7,"../utils/js-helpers.js":8,"./i18labels.js":3}],3:[function(require,module,exports){
+},{"../utils/dom-utilities.js":10,"../utils/js-helpers.js":11,"./i18labels.js":3}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1134,7 +1340,7 @@ var ModelsFactory = (function () {
 
 exports.ModelsFactory = ModelsFactory;
 
-},{"../utils/random-color.js":10}],5:[function(require,module,exports){
+},{"../utils/random-color.js":13}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -1145,8 +1351,10 @@ var _createClass = (function () { function defineProperties(target, props) { for
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var __s__ = require('../utils/js-helpers.js');
-var __d__ = require('../utils/dom-utilities.js');
+var __s__ = require('../utils/js-helpers.js'),
+    __d__ = require('../utils/dom-utilities.js'),
+    SpriteText2D = require('../text2D/SpriteText2D.js'),
+    textAlign = require('../text2D/textAlign.js');
 
 //Class Renderer3D
 
@@ -1183,6 +1391,8 @@ var Renderer3D = (function () {
         this.maxWidth = 0;
 
         this.shipHouse = null;
+        this.simpleDeck = null;
+        this.hatchCover = null;
 
         this.allMaterials = [];
         this.basicMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, wireframe: true });
@@ -1236,7 +1446,7 @@ var Renderer3D = (function () {
 
             this.container.divRenderC.appendChild(this.renderer.domElement);
 
-            this.camera = new THREE.PerspectiveCamera(50, this.width / this.height, 1, 3000);
+            this.camera = new THREE.PerspectiveCamera(50, this.width / this.height, 1, 30000);
             this.camera.position.z = options.initialCameraPosition.z;
             this.camera.position.x = options.initialCameraPosition.x;
             this.camera.position.y = options.initialCameraPosition.y;
@@ -1287,13 +1497,62 @@ var Renderer3D = (function () {
     }, {
         key: 'createBay',
         value: function createBay(k) {
-            var me = this;
+            var me = this,
+                holder = undefined;
 
-            if (!me.g3Bays["b" + k]) {
-                me.g3Bays["b" + k] = new THREE.Object3D();
-                me.g3Bays["b" + k].name = "b" + k;
-                me.scene.add(me.g3Bays["b" + k]);
+            if (me.g3Bays["b" + k]) {
+                return me.g3Bays["b" + k];
             }
+
+            //Create holder
+            holder = new THREE.Group();
+            holder.name = "b" + k;
+            holder.iBay = Number(k);
+            holder.isBlockStart = false;
+
+            //Add to bays-array & scene
+            me.g3Bays["b" + k] = holder;
+            me.scene.add(holder);
+
+            return holder;
+        }
+    }, {
+        key: '_addLabelsToBay',
+        value: function _addLabelsToBay(bay, posY, posZ) {
+            var holderLabels = undefined,
+                aboveTiersN = this.appScene.data.aboveTiers.n,
+                extraSep = this.appScene.options.extraSep,
+                labelScale = this.appScene.options.labelScale || 2;
+
+            holderLabels = new THREE.Group();
+            holderLabels.name = "labels";
+            holderLabels.visible = false;
+            bay.labelsCanBeVisible = true;
+
+            //Create FWD/AFT Labels
+            var textMesh = new SpriteText2D("FWD", {
+                align: textAlign.center,
+                font: '32px Arial',
+                fillStyle: '#000000' });
+
+            textMesh.position.z = -15;
+            textMesh.scale.set(labelScale, labelScale, 1);
+            holderLabels.add(textMesh);
+
+            textMesh = new SpriteText2D("AFT", {
+                align: textAlign.center,
+                font: '32px Arial',
+                fillStyle: '#000000' });
+
+            textMesh.position.z = 60;
+            textMesh.scale.set(labelScale, labelScale, 1);
+            holderLabels.add(textMesh);
+
+            //Add to Bay       
+            bay.add(holderLabels);
+            bay.labels = holderLabels;
+            holderLabels.position.y = posY;
+            holderLabels.position.z = posZ;
         }
     }, {
         key: 'addContainerMaterial',
@@ -1352,6 +1611,7 @@ var Renderer3D = (function () {
                 iTierMinAbove = d.iTierMinAbove,
                 dataStructured = d.dataStructured,
                 allContainerMeshesObj = d.allContainerMeshesObj,
+                numContsByBay = d.numContsByBay,
                 g3Bays = this.g3Bays,
                 loadingDiv = this.appScene._node.loadingDiv,
                 extraSep = this.appScene.options.extraSep,
@@ -1388,6 +1648,11 @@ var Renderer3D = (function () {
                 g3Bay = undefined,
                 maxDepth = undefined,
                 tmpArr = [],
+                compactBlockNum = undefined,
+                keyEven = undefined,
+                keyEvenPrev = undefined,
+                bayEven = undefined,
+                numContsByBlock = {},
                 compareLocations = function compareLocations(a, b) {
                 a.p === b.p ? 0 : a.p < b.p ? -1 : 1;
             };
@@ -1398,35 +1663,58 @@ var Renderer3D = (function () {
                 return memo + ob.h + extraSep;
             }, 0) + floorBelow;
 
+            compactBlockNum = 0;
             //Position of Bays
             for (j = 1; j <= lastBay; j += 2) {
                 key = __s__.pad(j, 3);
+                keyEven = __s__.pad(j + 1, 3);
+                keyEvenPrev = __s__.pad(j - 1, 3);
+                bayEven = g3Bays["b" + keyEven];
 
                 if (!dataStructured[key]) {
                     dataStructured[key] = { cells: {}, n: 0, z: 0 };
                 }
 
-                me.createBay(key);
-
                 if (j % 2 === 1) {
                     zAccum += 22.5 + extraSep;
                 }
 
+                //Odd
                 dataStructured[key].z = zAccum;
-                g3Bays["b" + key].position.z = zAccum;
+                g3Bay = me.createBay(key);
+                g3Bay.position.z = zAccum;
+                g3Bay.originalZ = zAccum;
+                g3Bay.isBlockStart = true;
+
+                //Even
+                if (bayEven) {
+                    bayEven.position.z = zAccum;
+                    bayEven.originalZ = zAccum;
+                }
+
+                //Even Previous (to check if it starts a new block)
+                if (numContsByBay[keyEvenPrev]) {
+                    g3Bay.isBlockStart = false;
+                }
+
+                if (g3Bay.isBlockStart) {
+                    compactBlockNum += 1;
+                    this._addLabelsToBay(g3Bay, aboveTiers.n * (9.5 + extraSep), //y
+                    0 //z
+                    );
+                }
+
+                //Blocks for side-by-side
+                g3Bay.compactBlockNum = compactBlockNum;
+                if (bayEven) {
+                    bayEven.compactBlockNum = compactBlockNum;
+                }
             }
 
             maxDepth = zAccum + lastBayDepth;
             this.maxDepth = maxDepth;
             this.maxWidth = d.maxWidth;
-
-            //Position of even bays (copy the position of previous bay)
-            for (key in g3Bays) {
-                if (key !== "b001" && g3Bays[key].position.z === 0) {
-                    g3Bays[key].position.z = g3Bays["b" + __s__.pad(Number(key.replace("b", "")) - 1, 3)].position.z;
-                }
-                g3Bays[key].originalZ = Number(g3Bays[key].position.z);
-            }
+            this.maxCompactBlockNums = compactBlockNum;
 
             //Iterate to create 3d containers & position
             for (j = 0, lenJ = data.info.contsL; j < lenJ; j += 1) {
@@ -1487,6 +1775,8 @@ var Renderer3D = (function () {
             line = new THREE.Line(ellipseGeometry, material);
             line.rotation.x = Math.PI / 2;
             this.scene.add(line);
+
+            this.simpleDeck = line;
         }
     }, {
         key: '_createHouse',
@@ -1757,7 +2047,7 @@ var Renderer3D = (function () {
 
 exports.Renderer3D = Renderer3D;
 
-},{"../utils/dom-utilities.js":7,"../utils/js-helpers.js":8}],6:[function(require,module,exports){
+},{"../text2D/SpriteText2D.js":8,"../text2D/textAlign.js":9,"../utils/dom-utilities.js":10,"../utils/js-helpers.js":11}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -1794,6 +2084,7 @@ var VesselsApp3D = (function () {
             colors: { background: 0xd2eef8, sunlight: 0xe2e2ee },
             dampingFactorOut: 0.2, dampingFactorIn: 0.75,
             initialCameraPosition: { x: 0, y: 0, z: 100 },
+            labelScale: 8,
             screenshots: { width: 600, height: 600, format: "png", transparent: true }
         }, opts);
 
@@ -1993,7 +2284,237 @@ var VesselsApp3D = (function () {
 
 exports.VesselsApp3D = VesselsApp3D;
 
-},{"../utils/dom-utilities.js":7,"../utils/js-helpers.js":8,"../utils/preloader.js":9,"./data-loader.js":2,"./i18labels.js":3,"./models-factory.js":4,"./renderer.js":5}],7:[function(require,module,exports){
+},{"../utils/dom-utilities.js":10,"../utils/js-helpers.js":11,"../utils/preloader.js":12,"./data-loader.js":2,"./i18labels.js":3,"./models-factory.js":4,"./renderer.js":5}],7:[function(require,module,exports){
+'use strict';
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+var fontHeightCache = {};
+
+var CanvasText = (function () {
+  function CanvasText() {
+    _classCallCheck(this, CanvasText);
+
+    this.textWidth = null;
+    this.textHeight = null;
+
+    this.canvas = document.createElement('canvas');
+    this.canvas.width = 128;
+    this.canvas.height = 128;
+    this.ctx = this.canvas.getContext('2d');
+  }
+
+  _createClass(CanvasText, [{
+    key: 'drawText',
+    value: function drawText(text, ctxOptions) {
+
+      this.ctx.font = ctxOptions.font;
+      this.textWidth = Math.ceil(this.ctx.measureText(text).width);
+      this.textHeight = getFontHeight(this.ctx.font);
+
+      //this.canvas.width = THREE.Math.nextPowerOfTwo(this.textWidth)
+      //this.canvas.height = THREE.Math.nextPowerOfTwo(this.textHeight)
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      //this.ctx.
+
+      this.ctx.font = ctxOptions.font;
+      this.ctx.fillStyle = "#fff";
+      this.ctx.textAlign = 'center';
+      this.ctx.textBaseline = 'middle';
+
+      this.ctx.fillText(text, this.canvas.width / 2, this.canvas.height / 2);
+
+      return this.canvas;
+    }
+  }, {
+    key: 'width',
+    get: function get() {
+      return this.canvas.width;
+    }
+  }, {
+    key: 'height',
+    get: function get() {
+      return this.canvas.height;
+    }
+  }]);
+
+  return CanvasText;
+})();
+
+function getFontHeight(fontStyle) {
+  var result = fontHeightCache[fontStyle];
+
+  if (!result) {
+    var body = document.getElementsByTagName('body')[0];
+    var dummy = document.createElement('div');
+
+    var dummyText = document.createTextNode('span');
+    dummy.appendChild(dummyText);
+    dummy.setAttribute('style', 'font:' + fontStyle + ';position:absolute;top:0;left:0');
+    body.appendChild(dummy);
+    result = dummy.offsetHeight;
+
+    fontHeightCache[fontStyle] = result;
+    body.removeChild(dummy);
+  }
+
+  return result;
+}
+
+module.exports = CanvasText;
+
+},{}],8:[function(require,module,exports){
+'use strict';
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+var _get = function get(_x3, _x4, _x5) { var _again = true; _function: while (_again) { var object = _x3, property = _x4, receiver = _x5; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x3 = parent; _x4 = property; _x5 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var textAlign = require('./textAlign.js'),
+    CanvasText = require('./CanvasText.js');
+
+var SpriteText2D = (function (_THREE$Object3D) {
+  _inherits(SpriteText2D, _THREE$Object3D);
+
+  function SpriteText2D() {
+    var text = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
+    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+    _classCallCheck(this, SpriteText2D);
+
+    _get(Object.getPrototypeOf(SpriteText2D.prototype), 'constructor', this).call(this);
+
+    this._font = options.font || '30px Arial';
+    this._fillStyle = options.fillStyle || '#FFFFFF';
+
+    this.canvas = new CanvasText();
+
+    this.align = options.align || textAlign.center;
+
+    // this._textAlign = options.align || "center"
+    // this.anchor = Label.fontAlignAnchor[ this._textAlign ]
+    this.antialias = typeof (options.antialias === "undefined") ? true : options.antialias;
+    this.text = text;
+  }
+
+  _createClass(SpriteText2D, [{
+    key: 'updateText',
+    value: function updateText() {
+      this.canvas.drawText(this._text, {
+        font: this._font,
+        fillStyle: this._fillStyle
+      });
+
+      // cleanup previous texture
+      this.cleanUp();
+
+      this.texture = new THREE.Texture(this.canvas.canvas);
+      this.texture.needsUpdate = true;
+      this.applyAntiAlias();
+
+      if (!this.material) {
+        this.material = new THREE.SpriteMaterial({ map: this.texture });
+      } else {
+        this.material.map = this.texture;
+      }
+
+      if (!this.sprite) {
+        this.sprite = new THREE.Sprite(this.material);
+        this.geometry = this.sprite.geometry;
+        this.add(this.sprite);
+      }
+
+      //this.sprite.scale.set(this.canvas.width, this.canvas.height, 1)
+
+      //this.sprite.position.x = ((this.canvas.width/2) - (this.canvas.textWidth/2)) + ((this.canvas.textWidth/2) * this.align.x)
+      //this.sprite.position.y = (- this.canvas.height/2) + ((this.canvas.textHeight/2) * this.align.y)
+    }
+  }, {
+    key: 'cleanUp',
+    value: function cleanUp() {
+      if (this.texture) {
+        this.texture.dispose();
+      }
+    }
+  }, {
+    key: 'applyAntiAlias',
+    value: function applyAntiAlias() {
+      if (this.antialias === false) {
+        this.texture.magFilter = THREE.NearestFilter;
+        this.texture.minFilter = THREE.LinearMipMapLinearFilter;
+      }
+    }
+  }, {
+    key: 'width',
+    get: function get() {
+      return this.canvas.textWidth;
+    }
+  }, {
+    key: 'height',
+    get: function get() {
+      return this.canvas.textHeight;
+    }
+  }, {
+    key: 'text',
+    get: function get() {
+      return this._text;
+    },
+    set: function set(value) {
+      if (this._text !== value) {
+        this._text = value;
+        this.updateText();
+      }
+    }
+  }, {
+    key: 'font',
+    get: function get() {
+      return this._font;
+    },
+    set: function set(value) {
+      if (this._font !== value) {
+        this._font = value;
+        this.updateText();
+      }
+    }
+  }, {
+    key: 'fillStyle',
+    get: function get() {
+      return this._fillStyle;
+    },
+    set: function set(value) {
+      if (this._fillStyle !== value) {
+        this._fillStyle = value;
+        this.updateText();
+      }
+    }
+  }]);
+
+  return SpriteText2D;
+})(THREE.Object3D);
+
+module.exports = SpriteText2D;
+
+},{"./CanvasText.js":7,"./textAlign.js":9}],9:[function(require,module,exports){
+"use strict";
+
+module.exports = {
+  center: new THREE.Vector2(0, 0),
+  left: new THREE.Vector2(1, 0),
+  topLeft: new THREE.Vector2(1, -1),
+  topRight: new THREE.Vector2(-1, -1),
+  right: new THREE.Vector2(-1, 0),
+  bottomLeft: new THREE.Vector2(1, 1),
+  bottomRight: new THREE.Vector2(-1, 1)
+};
+
+},{}],10:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2033,7 +2554,7 @@ var addEventDsptchr = function addEventDsptchr(eName) {
 };
 exports.addEventDsptchr = addEventDsptchr;
 
-},{}],8:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -2132,7 +2653,7 @@ var getQueryParams = function getQueryParams() {
 };
 exports.getQueryParams = getQueryParams;
 
-},{}],9:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2312,7 +2833,7 @@ var _default = (function () {
 exports["default"] = _default;
 module.exports = exports["default"];
 
-},{}],10:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {

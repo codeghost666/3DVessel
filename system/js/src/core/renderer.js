@@ -1,5 +1,7 @@
-var __s__ = require('../utils/js-helpers.js');
-var __d__ = require('../utils/dom-utilities.js');
+var __s__ = require('../utils/js-helpers.js'),
+    __d__ = require('../utils/dom-utilities.js'),
+    SpriteText2D = require('../text2D/SpriteText2D.js'),
+    textAlign = require('../text2D/textAlign.js');
 
 //Class Renderer3D
 export class Renderer3D {
@@ -34,6 +36,8 @@ export class Renderer3D {
         this.maxWidth = 0;
 
         this.shipHouse = null;
+        this.simpleDeck = null;
+        this.hatchCover = null;
 
         this.allMaterials = [];
         this.basicMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, transparent: true, opacity: 0.3, wireframe: true } );
@@ -80,7 +84,7 @@ export class Renderer3D {
 
         this.container.divRenderC.appendChild(this.renderer.domElement);
         
-        this.camera = new THREE.PerspectiveCamera(50, this.width / this.height, 1, 3000);
+        this.camera = new THREE.PerspectiveCamera(50, this.width / this.height, 1, 30000);
         this.camera.position.z = options.initialCameraPosition.z;
         this.camera.position.x = options.initialCameraPosition.x;
         this.camera.position.y = options.initialCameraPosition.y;
@@ -130,13 +134,60 @@ export class Renderer3D {
     }
 
     createBay(k) {
-        let me = this;
+        let me = this, 
+            holder;
 
-        if (!me.g3Bays["b" + k]) {
-            me.g3Bays["b" + k] = new THREE.Object3D();
-            me.g3Bays["b" + k].name = "b" + k;
-            me.scene.add(me.g3Bays["b" + k]);
-        }   
+        if (me.g3Bays["b" + k]) { return me.g3Bays["b" + k]; }
+
+        //Create holder
+        holder = new THREE.Group();
+        holder.name = "b" + k;
+        holder.iBay = Number(k);
+        holder.isBlockStart = false;
+
+        //Add to bays-array & scene
+        me.g3Bays["b" + k] = holder;
+        me.scene.add(holder);
+
+        return holder;         
+    }
+
+    _addLabelsToBay(bay, posY, posZ) {
+        let holderLabels,
+            aboveTiersN = this.appScene.data.aboveTiers.n,
+            extraSep = this.appScene.options.extraSep,
+            labelScale = this.appScene.options.labelScale || 2;
+
+        holderLabels = new THREE.Group();
+        holderLabels.name = "labels";
+        holderLabels.visible = false;
+        bay.labelsCanBeVisible = true;
+
+        //Create FWD/AFT Labels
+        let textMesh = new SpriteText2D("FWD", { 
+            align: textAlign.center,
+            font: '32px Arial', 
+            fillStyle: '#000000'});
+
+        textMesh.position.z = -15;
+        textMesh.scale.set(labelScale, labelScale, 1);
+        holderLabels.add(textMesh);
+
+        textMesh = new SpriteText2D("AFT", { 
+            align: textAlign.center,
+            font: '32px Arial', 
+            fillStyle: '#000000'});
+
+        textMesh.position.z = 60;
+        textMesh.scale.set(labelScale, labelScale, 1);
+        holderLabels.add(textMesh);
+
+        //Add to Bay        
+        bay.add(holderLabels);
+        bay.labels = holderLabels;
+        holderLabels.position.y = posY;   
+        holderLabels.position.z = posZ;   
+
     }
 
     addContainerMaterial (hexColor) {
@@ -194,6 +245,7 @@ export class Renderer3D {
             iTierMinAbove = d.iTierMinAbove,    
             dataStructured = d.dataStructured,
             allContainerMeshesObj = d.allContainerMeshesObj,
+            numContsByBay = d.numContsByBay,
 
             g3Bays = this.g3Bays,
             loadingDiv = this.appScene._node.loadingDiv,
@@ -211,6 +263,7 @@ export class Renderer3D {
             g3Bay,
             maxDepth,
             tmpArr = [],
+            compactBlockNum, keyEven, keyEvenPrev, bayEven, numContsByBlock = {},
 
             compareLocations = (a,b) => { a.p === b.p ? 0 : ( a.p < b.p ? -1 : 1) };           
         
@@ -218,35 +271,55 @@ export class Renderer3D {
         lastBayDepth = dataStructured[lastBay].maxD;
         floorBelow = _.reduce(belowTiers.tiers, function(memo, ob){ return memo + ob.h + extraSep; }, 0) + floorBelow;
 
+        compactBlockNum = 0;
         //Position of Bays
         for (j = 1; j <= lastBay; j += 2) {
             key = __s__.pad(j, 3);
+            keyEven = __s__.pad(j + 1, 3);
+            keyEvenPrev = __s__.pad(j - 1, 3);
+            bayEven = g3Bays["b" + keyEven];
 
             if (!dataStructured[key]) {
                 dataStructured[key] = { cells: {}, n: 0, z: 0};
             }
 
-            me.createBay(key);
-
             if (j % 2 === 1) {
                 zAccum += 22.5 + extraSep;
             }
 
+            //Odd
             dataStructured[key].z = zAccum;
-            g3Bays["b" + key].position.z = zAccum;
+            g3Bay = me.createBay(key);
+            g3Bay.position.z = zAccum;
+            g3Bay.originalZ = zAccum;
+            g3Bay.isBlockStart = true; 
+
+            //Even
+            if (bayEven) {
+                bayEven.position.z = zAccum;
+                bayEven.originalZ = zAccum;
+            }
+
+            //Even Previous (to check if it starts a new block)
+            if (numContsByBay[keyEvenPrev]) { g3Bay.isBlockStart = false; }
+
+            if (g3Bay.isBlockStart) {
+                compactBlockNum += 1;
+                this._addLabelsToBay(g3Bay, 
+                    aboveTiers.n * (9.5 + extraSep), //y 
+                    0 //z
+                ); 
+            }
+
+            //Blocks for side-by-side
+            g3Bay.compactBlockNum = compactBlockNum;
+            if (bayEven) { bayEven.compactBlockNum = compactBlockNum; }
         }
 
         maxDepth = zAccum + lastBayDepth;
         this.maxDepth = maxDepth;
         this.maxWidth = d.maxWidth;
-        
-        //Position of even bays (copy the position of previous bay)
-        for (key in g3Bays) {
-            if(key !== "b001" && g3Bays[key].position.z === 0) {
-                g3Bays[key].position.z = g3Bays["b" + __s__.pad(Number(key.replace("b", "")) - 1, 3)].position.z; 
-            }
-            g3Bays[key].originalZ = Number(g3Bays[key].position.z);
-        }
+        this.maxCompactBlockNums = compactBlockNum;
         
         //Iterate to create 3d containers & position
         for (j = 0, lenJ = data.info.contsL; j < lenJ; j += 1) {
@@ -307,6 +380,8 @@ export class Renderer3D {
         line = new THREE.Line(ellipseGeometry, material);
         line.rotation.x = Math.PI / 2;
         this.scene.add(line);
+
+        this.simpleDeck = line;
     }
 
     _createHouse (hAbv) {

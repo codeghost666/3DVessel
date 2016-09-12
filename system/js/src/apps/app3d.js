@@ -20,12 +20,17 @@ controlsControl = {
     latestFilter: "",
     dropBays: null,
     dropBaysDictionary: {},
+    dropAddHouse: null,
     openBayInfo: null,
     closeBayInfo: null,
     bayInfo: null,
     bayInfoTable: null,
     baySelected: "",
     shipHouseSpace: 20.5,
+    isExpanded: false,
+    prevnextCont: null,
+    prevnextNum: 1,
+    numContsByBlock: null,
 
     init: function (){
         let ctrlColors = document.getElementById("dropColors"),
@@ -35,6 +40,8 @@ controlsControl = {
 
         me.dropFilterValue = document.getElementById("dropFilterValue"); 
         me.showWireframes = document.getElementById("showWireframesFiltered");
+        me.expandViewBtn = document.getElementById("expandView");
+        me.prevnextCont = document.getElementById("prevnext-container");
         me.dropFilter = ctrlFilter;
         
         opt = document.createElement("option");
@@ -57,6 +64,10 @@ controlsControl = {
         __d__.addEventLnr(ctrlColors, "change", me.colorize);
         __d__.addEventLnr(me.showWireframes, "change", me.listenWireframeDisplay);
         __d__.addEventLnr(window, "keydown", me.checkKeyPressed);
+        __d__.addEventLnr(me.expandViewBtn, "change", me.expandView);
+
+        __d__.addEventLnr(document.getElementById("bay-next"), "click", me.expandViewNext);
+        __d__.addEventLnr(document.getElementById("bay-prev"), "click", me.expandViewPrev);
 
         me.addBaysControl();
         me.addHouseControl();
@@ -70,6 +81,7 @@ controlsControl = {
             bays = [], oddB, prevOddExists, nextOddExists, oneOddExists,
             me = controlsControl, iBay,
             g3Bays = app3d.renderer3d.g3Bays,
+            dataStructured = app3d.data.dataStructured,
             lis = ["<option value=''>All bays</option>"];
         
         function changeBay(ev) {
@@ -88,8 +100,10 @@ controlsControl = {
             iBay = Number(bays[j]);
             oddB = iBay % 2 === 1;
             if(oddB) {
-                lis.push("<option value='" + bays[j] + "'>" + bays[j] + "</option>");
-                me.dropBaysDictionary[bays[j]] = bays[j];
+                if (dataStructured[bays[j]].n) {
+                    lis.push("<option value='" + bays[j] + "'>" + bays[j] + "</option>");
+                    me.dropBaysDictionary[bays[j]] = bays[j];
+                }
             }
             else {
                 prevOddExists = (j+1) < lenJ && Number(bays[j+1]) === (iBay + 1);
@@ -121,6 +135,7 @@ controlsControl = {
             dataStructured = app3d.data.dataStructured,
             key, bays, j, lenJ, lis = ["<option value=''>No house</option>"]; 
         
+
         bays = __s__.objKeysToArray(me.dropBaysDictionary);
         bays = bays.sort(__s__.sortNumeric);
         for(j = bays.length - 1; j >= 0; j -= 1) {
@@ -129,9 +144,10 @@ controlsControl = {
                 lis.push("<option value='" + me.dropBaysDictionary[key] + "'>before " + key +"</option>");
             }
         }
+
         dropAddHouse.innerHTML = lis.join("");
-        app3d.renderer3d.shipHouse.dropdown = dropAddHouse;
-        __d__.addEventLnr(dropAddHouse, "change", me.moveShipHouse);
+        __d__.addEventLnr(dropAddHouse, "change", me.moveShipHouseLnr);
+        me.dropAddHouse = dropAddHouse;
     },
 
     prepareFilter: function (e) {
@@ -263,6 +279,7 @@ controlsControl = {
             me.dropFilterValue.setAttribute("prevAttr", prevAttr);
             me.showWireframes.setAttribute("disabled", "disabled");
             me.dropBays.setAttribute("disabled", "disabled");
+            me.dropAddHouse.setAttribute("disabled", "disabled");
             return;
         }
         //else
@@ -271,6 +288,8 @@ controlsControl = {
         if(prevAttr !== "disabled") { me.dropFilterValue.removeAttribute("disabled"); }
         me.showWireframes.removeAttribute("disabled");
         me.dropBays.removeAttribute("disabled");
+        me.dropAddHouse.removeAttribute("disabled");
+        
     },
 
     colorize: function (e) {
@@ -290,9 +309,10 @@ controlsControl = {
         }
     },
 
-    isolateBay: function(sBay) {
+    isolateBay: function(sBay, force = false) {
         
-        var iBay = Number(sBay), sepZ = 40, topY = 400, newZ, me = controlsControl,
+        var me = controlsControl,
+            iBay = Number(sBay), sepZ = 40, topY = 500, newZ, 
             dataStructured = app3d.data.dataStructured,
             filters = app3d.data.filters,
             g3Bays = app3d.renderer3d.g3Bays,
@@ -448,10 +468,13 @@ controlsControl = {
             
             bayM = g3Bays["b" + __s__.pad(bayToAnimate, 3)];
             bayMeven = g3Bays["b" + __s__.pad(iEvenBay, 3)];
-            if(bayM)
-                {TweenLite.to(bayM.position, timing, {y: bayY, delay:0.5, ease: Power2.easeInOut});}
-            if(bayMeven)
-                {TweenLite.to(bayMeven.position, timing, {y: bayY, delay:0.5, ease: Power2.easeInOut});}
+            if(bayM) {
+                TweenLite.to(bayM.position, timing, {y: bayY, delay:0.5, ease: Power2.easeInOut});
+                //bayM.labels.visible = !!bayY; 
+            }
+            if(bayMeven) {
+                TweenLite.to(bayMeven.position, timing, {y: bayY, delay:0.5, ease: Power2.easeInOut});
+            }
             
             return bayM.originalZ;
         }
@@ -466,13 +489,15 @@ controlsControl = {
                 camPos = app3d.renderer3d.camera.position;
                 
             me.pauseControls(true);
+            me.expandViewBtn.setAttribute("disabled", "disabled");
             opened = me.baySelected !== "";
             if(opened) {
                 //cerramos
                 animateBays(Number(me.baySelected), 0.35, 0, 0, 0);
                 //abrimos
-                if (iBay > 0)
+                if (iBay > 0) {
                     newZ = animateBays(iBay, 0.4, sepZ, .75, topY);
+                }
             } else {
                 //abrimos uno nuevo
                 newZ = animateBays(iBay, 1, sepZ, 0, topY);
@@ -487,6 +512,7 @@ controlsControl = {
                 delayUp = 0.5;
                 controls.dampingFactor = options.dampingFactorIn;
                 openBaypanelButtonZ = 30;
+                newZ += 11;
             } else {
                 me.baySelected = "";
                 camZ = me.initialCameraPosition.z;
@@ -501,16 +527,19 @@ controlsControl = {
             TweenLite.to(camPos, 1, {x: camX, y: camY, z:camZ, delay:delayUp, ease: Power2.easeInOut});
             TweenLite.to(controls.target, 2.0, { y: cY, x: 0, z: newZ, ease: Power2.easeInOut });
             TweenLite.to(me.openBayInfo, 1.0, { left: openBaypanelButtonZ, delay:delayUp * 4,  ease: Power2.easeInOut });
-            setTimeout(function() { me.pauseControls(false);}, 2500);
+            setTimeout(function() {
+                me.expandViewBtn.removeAttribute("disabled");
+                me.pauseControls(false);
+            }, 2500);
         }
         
         
         separateBay(!sBay ? "" : sBay);
         if(!!sBay) {
-            shipHouse.dropdown.setAttribute("disabled", "disabled"); 
+            me.dropAddHouse.setAttribute("disabled", "disabled"); 
             generateTable(iBay);
         } else {
-            shipHouse.dropdown.removeAttribute("disabled"); 
+            me.dropAddHouse.removeAttribute("disabled"); 
         }
         
 
@@ -553,8 +582,13 @@ controlsControl = {
             
     },
 
-    moveShipHouse: function (ev) {
-        var v = ev.target.value, key, bayGroup, i,
+    moveShipHouseLnr: function (ev) {
+        var v = ev.target.value;
+        controlsControl.moveShipHouse(v);
+    },
+
+    moveShipHouse: function (v) {
+        var key, bayGroup, i,
             me = controlsControl,
             bays, j, lenJ,
             shipHouse = app3d.renderer3d.shipHouse,
@@ -604,7 +638,8 @@ controlsControl = {
 
         switch(e.keyCode) {
             case 27:
-            
+                if (me.isExpanded){ return; }
+
                 if (me.baySelected !== "") {
                     me.dropBays.value = "";
                     me.bayInfo.style.display = "none";
@@ -640,6 +675,147 @@ controlsControl = {
         }
         tableColors.innerHTML = liColors.join("");
     },
+
+    expandView: function(ev) {
+        let me = controlsControl,
+            doExpand = ev.target.checked,
+            iBay, g3Bay, key, j, 
+            g3Bays = app3d.renderer3d.g3Bays,
+            dataStructured = app3d.data.dataStructured,
+            maxWidth = app3d.renderer3d.maxWidth,
+            extraSep = app3d.options.extraSep,
+            xAdd =  maxWidth * (9.5 + extraSep) * 1.5,
+            xAccum = -xAdd,
+            visib = true,
+            lastBay = app3d.data.lastBay;
+
+        //Aggregates num of containers by block
+        function calculateContsByBlock() {
+            if (me.numContsByBlock) { return; }
+
+            let ncbb = {}, j,
+                numContsByBay = app3d.data.numContsByBay;
+
+            for (j = 1; j <= lastBay + 1; j += 1) {
+                key = __s__.pad(j, 3);
+                g3Bay = g3Bays["b" + key];
+                if (!g3Bay) { continue; }
+                if (!ncbb[g3Bay.compactBlockNum]) {
+                    ncbb[g3Bay.compactBlockNum] = 0;
+                }
+                ncbb[g3Bay.compactBlockNum] += numContsByBay[key] || 0;
+            }
+            me.numContsByBlock = ncbb;
+        }            
+
+        //Expands the bays horizontally
+        function expandBays() {
+            me.pauseControls(true);
+            if (me.baySelected !== "") {
+                me.openBayInfo.style.left = "-300px";
+            }
+
+            for (j = 1; j <= lastBay + 1; j += 1) {
+                key = __s__.pad(j, 3);
+                g3Bay = g3Bays["b" + key];
+
+                if (!g3Bay) { continue; }
+
+                if (g3Bay.isBlockStart && me.numContsByBlock[g3Bay.compactBlockNum]) {
+                    xAccum += xAdd;
+                    g3Bay.labels.visible = true;
+                }
+
+                g3Bay.position.z = j & 1 && !g3Bay.isBlockStart ? 22.5 + extraSep : 0;
+                g3Bay.position.x = xAccum;
+                g3Bay.position.y = 0;
+            }
+
+            me.prevnextNum = 1;
+            app3d.renderer3d.simpleDeck.visible = false;
+            app3d.renderer3d.shipHouse.prevVisible = app3d.renderer3d.shipHouse.mesh.visible;
+            app3d.renderer3d.shipHouse.mesh.visible = false;
+            app3d.renderer3d.camera.position.set(0, app3d.data.aboveTiers.n * 14, xAdd);
+            app3d.renderer3d.controls.target.set(0, 0, 20);
+            me.prevnextCont.style.display = "block";
+        }
+
+        function contractBays() {
+            for (key in g3Bays) {
+                g3Bay = g3Bays[key];
+                g3Bay.position.z = g3Bay.originalZ;
+                g3Bay.position.x = 0;
+                g3Bay.position.y = 0;
+                if (g3Bay.labels) { g3Bay.labels.visible = false;}
+            }  
+
+            let ic = controlsControl.initialCameraPosition;
+            app3d.renderer3d.setCameraPosition(ic.x, ic.y, ic.z);
+            app3d.renderer3d.controls.target.x = 0;
+            app3d.renderer3d.controls.target.y = 0;
+            app3d.renderer3d.controls.target.z = ic.targetZ;
+
+            app3d.renderer3d.simpleDeck.visible = true;
+            app3d.renderer3d.shipHouse.mesh.visible = app3d.renderer3d.shipHouse.prevVisible;
+            me.prevnextCont.style.display = "none";
+            me.pauseControls(false);
+            
+        }
+
+        calculateContsByBlock();
+        me.isExpanded = doExpand;
+
+        app3d.pauseRendering();
+        (doExpand ? expandBays : contractBays)();
+        app3d.resumeRendering(); 
+    },
+
+    expandViewNext () { controlsControl.expandViewNextPrev(true); },
+    expandViewPrev () { controlsControl.expandViewNextPrev(false); },
+
+    expandViewNextPrev (next) {
+        let me = controlsControl,
+            timing = 0.5,
+            key, gBay, newBlockNum,
+            g3Bays = app3d.renderer3d.g3Bays,
+            lastBay = app3d.data.lastBay;
+
+        const myXAnd = (a,b) => a ? b : !b;        
+
+        function showBays() {
+            let g3Bay, j;
+
+            newBlockNum = me.prevnextNum;
+            do {
+                newBlockNum = newBlockNum + (next ? 1 : -1);
+                if (newBlockNum <= 0 || newBlockNum > app3d.renderer3d.maxCompactBlockNums) { return null; }
+            } while (me.numContsByBlock[newBlockNum] <= 0);
+
+            for (j = 1; j <= lastBay + 1; j += 1) {
+                key = __s__.pad(j, 3);
+                g3Bay = g3Bays["b" + key];
+
+                if (!g3Bay) { continue; } 
+                if (g3Bay.compactBlockNum === newBlockNum) {
+                    if (me.numContsByBlock[g3Bay.compactBlockNum]) { 
+                        return g3Bay;
+                    }
+                }
+
+            }
+            return null;
+        }
+
+        gBay = showBays();
+        if (!gBay) { return; }
+
+        TweenLite.to(app3d.renderer3d.camera.position, timing, {x: gBay.position.x, ease: Power2.easeInOut});
+        TweenLite.to(app3d.renderer3d.controls.target, timing, {x: gBay.position.x, ease: Power2.easeInOut});
+
+        me.prevnextNum = newBlockNum;        
+    }
+
+    
 }; //controlsControl 
 
 
