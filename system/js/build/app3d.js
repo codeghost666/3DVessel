@@ -1533,7 +1533,7 @@ var Renderer3D = (function () {
             var textMesh = new SpriteText2D("FWD", {
                 align: textAlign.center,
                 font: '32px Arial',
-                fillStyle: '#000000' });
+                fillStyle: '#888888' });
 
             textMesh.position.z = -15;
             textMesh.scale.set(labelScale, labelScale, 1);
@@ -1542,7 +1542,7 @@ var Renderer3D = (function () {
             textMesh = new SpriteText2D("AFT", {
                 align: textAlign.center,
                 font: '32px Arial',
-                fillStyle: '#000000' });
+                fillStyle: '#888888' });
 
             textMesh.position.z = 60;
             textMesh.scale.set(labelScale, labelScale, 1);
@@ -2317,11 +2317,12 @@ var CanvasText = (function () {
       //this.canvas.width = THREE.Math.nextPowerOfTwo(this.textWidth)
       //this.canvas.height = THREE.Math.nextPowerOfTwo(this.textHeight)
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.ctx.fillStyle = ctxOptions.fillStyle;
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
       //this.ctx.
 
       this.ctx.font = ctxOptions.font;
-      this.ctx.fillStyle = "#fff";
+      this.ctx.fillStyle = "#000";
       this.ctx.textAlign = 'center';
       this.ctx.textBaseline = 'middle';
 

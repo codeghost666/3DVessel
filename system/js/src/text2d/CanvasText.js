@@ -24,11 +24,12 @@ class CanvasText {
     //this.canvas.width = THREE.Math.nextPowerOfTwo(this.textWidth)
     //this.canvas.height = THREE.Math.nextPowerOfTwo(this.textHeight)
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillStyle = ctxOptions.fillStyle;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     //this.ctx.
 
     this.ctx.font = ctxOptions.font
-    this.ctx.fillStyle = "#fff";
+    this.ctx.fillStyle = "#000";
     this.ctx.textAlign = 'center';
     this.ctx.textBaseline = 'middle';
 

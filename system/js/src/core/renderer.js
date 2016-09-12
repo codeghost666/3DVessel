@@ -167,7 +167,7 @@ export class Renderer3D {
         let textMesh = new SpriteText2D("FWD", { 
             align: textAlign.center,
             font: '32px Arial', 
-            fillStyle: '#000000'});
+            fillStyle: '#888888'});
 
         textMesh.position.z = -15;
         textMesh.scale.set(labelScale, labelScale, 1);
@@ -176,7 +176,7 @@ export class Renderer3D {
         textMesh = new SpriteText2D("AFT", { 
             align: textAlign.center,
             font: '32px Arial', 
-            fillStyle: '#000000'});
+            fillStyle: '#888888'});
 
         textMesh.position.z = 60;
         textMesh.scale.set(labelScale, labelScale, 1);
