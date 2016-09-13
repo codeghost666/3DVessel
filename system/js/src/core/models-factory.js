@@ -15,7 +15,8 @@ export class ModelsFactory {
         if (!isoModels[obj.i]) {
             isoModels[obj.i] = {
                 d: obj.depth,
-                h: obj.h
+                h: obj.h,
+                t: obj.t
             }
         }
     }

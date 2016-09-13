@@ -39,9 +39,11 @@ export class Renderer3D {
         this.simpleDeck = null;
         this.hatchCover = null;
 
+        this.hatchCovers = {};
+
         this.allMaterials = [];
         this.basicMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, transparent: true, opacity: 0.3, wireframe: true } );
-        this.selectionMaterial = new THREE.MeshStandardMaterial( { color: 0x000000,  opacity: 1, side: THREE.DoubleSide, transparent: false} );
+        this.selectionMaterial = new THREE.MeshStandardMaterial( { color: 0x000000,  opacity: 1, transparent: false} );
         
     }
 
@@ -193,7 +195,7 @@ export class Renderer3D {
     addContainerMaterial (hexColor) {
         let material = new THREE.MeshStandardMaterial({ 
             color: hexColor,
-            side: THREE.DoubleSide,
+            //side: THREE.DoubleSide,
             transparent: true,
             opacity: 1
         });
@@ -205,31 +207,41 @@ export class Renderer3D {
     createBaseModels (isoModels) {
         var me = this,
             key,
-            isoModel, h, obj, spec,
+            isoModel, h, obj, spec, cldr,
             filters = this.appScene.data.filters,
             geom, mesh;
         
         for (key in isoModels) {
+
             isoModel = isoModels[key];
             h = isoModel.h;
-            
-            obj = new THREE.Shape([
-                new THREE.Vector2( 0, 0 ),
-                new THREE.Vector2( 0, h ),
-                new THREE.Vector2( 8, h ),
-                new THREE.Vector2( 8, 0 )
-            ]);
-            
-            geom = new THREE.ExtrudeGeometry( obj, { 
-                bevelEnabled: false,
-                steps: 1,
-                amount: isoModel.d
-            });
-            
             spec = filters.i.obs[key];
 
-            mesh = new THREE.Mesh( geom, me.allMaterials[spec.materialPos] );
-            mesh.materialPos = spec.materialPos;
+            if (!isoModel.t) { //Not a TANK
+                obj = new THREE.Shape([
+                    new THREE.Vector2( 0, 0 ),
+                    new THREE.Vector2( 0, h ),
+                    new THREE.Vector2( 8, h ),
+                    new THREE.Vector2( 8, 0 )
+                ]);
+                
+                geom = new THREE.ExtrudeGeometry( obj, { 
+                    bevelEnabled: false,
+                    steps: 1,
+                    amount: isoModel.d
+                });
+
+                mesh = new THREE.Mesh( geom, me.allMaterials[spec.materialPos] );                
+            } else {
+                //A tank                
+                geom = new THREE.CylinderGeometry(4, 4, isoModel.d, 16);
+                mesh = new THREE.Mesh(geom, me.allMaterials[spec.materialPos] );
+                geom.translate(-4, isoModel.d / 2, -4);
+                mesh.rotation.z = -Math.PI / 2; //Cilinder is upSided
+                mesh.rotation.y = -Math.PI / 2; 
+            }            
+            
+            mesh.materialPos = spec.materialPos;            
             mesh.dynamic = true;
             this.models[key] = mesh;
         }
@@ -257,7 +269,7 @@ export class Renderer3D {
             zAccum = 0,
             x, y, z, 
             prevBay, extraAdd, hasZeroRow, isOdd,
-            floorAbove = 3, floorBelow = 3 - extraSep,
+            floorAbove = 4, floorBelow = 4 - extraSep,
             lastBay,
             iBay, iCell, iTier, lastBayDepth,
             g3Bay,
@@ -355,11 +367,173 @@ export class Renderer3D {
         
         me._createShipDeck();
         me._createHouse(aboveTiers.n);
+        me._createHatchCovers();
         
         loadingDiv.stopAnimation();
         setTimeout(function() {
             loadingDiv.hide();
         }, 500);
+    }
+
+    _createHatchCovers () {
+        let extraSep = this.appScene.options.extraSep,
+            maxWidth = this.maxWidth,
+            maxDepth = this.maxDepth,
+            maxWidthFeet = maxWidth * (8 + extraSep),
+            dataStructured = this.appScene.data.dataStructured,
+            g3Bays = this.g3Bays,
+            lastBay = this.appScene.data.lastBay,
+            addZeroCell =this.appScene.data.hasZeroCell ? 1 : 0,
+            hatchesArr = [],
+            j, lenJ, key, g3Bay, icb = [], icbn, maxBlock = 0, symmetricMax,
+
+            hatchGroup3D = new THREE.Group(), msh, block, hatch, posL, x, z, dd, hatchLine,
+            materialHatch = new THREE.MeshStandardMaterial({ color: 0x666666 });
+        
+        const maxContsDepth = 60;
+
+        function generateHatchArray(w) {
+            let hatchNum, hatchNumInt, hatchWidth, hatchDiff, arrHatchesWidth;
+
+            hatchWidth = w === 5 || w === 6 || w === 9 ? 3 : w <= 4 ? w : 4;
+            hatchNum = w / hatchWidth;
+            hatchNumInt = Math.ceil(hatchNum);
+            arrHatchesWidth = new Array(hatchNumInt);
+
+            //Fill array
+            for (let j = 0; j < hatchNumInt; j += 1) { arrHatchesWidth[j] = hatchWidth; }
+            hatchDiff = Math.ceil((hatchNum - Math.floor(hatchNum)) * hatchWidth);
+            if (hatchDiff > 0) { arrHatchesWidth[Math.floor(hatchNumInt / 2)] = hatchDiff; }
+
+            return arrHatchesWidth;
+        }
+
+        function createHatch3D(w, d) {
+            let obj, geom, mesh, 
+                wFeet = w * (8 + extraSep) - extraSep;
+
+            obj = new THREE.Shape([
+                new THREE.Vector2( -wFeet, 0 ),
+                new THREE.Vector2( -wFeet, d ),
+                new THREE.Vector2( 0, d ),
+                new THREE.Vector2( 0, 0 )
+            ]);
+            
+            geom = new THREE.ExtrudeGeometry( obj, { 
+                bevelEnabled: false,
+                steps: 1,
+                amount: 3
+            });
+
+            mesh = new THREE.Mesh( geom, materialHatch );
+            mesh.rotation.x = Math.PI / 2;
+            geom.translate(8.5 + extraSep, 0, 0);
+            return mesh;
+        }
+        
+        //Generate info of widths per Block (width, depth)
+        for (j = 1; j <= lastBay + 1; j += 2) {
+            key = __s__.pad(j, 3);
+            g3Bay = g3Bays["b" + key];
+            if (!g3Bay) { continue; }
+
+            if (!icb[g3Bay.compactBlockNum] || icb[g3Bay.compactBlockNum].cells < dataStructured[key].n) {
+                icb[g3Bay.compactBlockNum] = {
+                    baseBay: g3Bay.iBay,
+                    cbn: g3Bay.compactBlockNum,
+                    cells : dataStructured[key].n,
+                    maxD: dataStructured[key].maxD,
+                    posLeft: Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 0), (kk) => Number(kk))),
+                    posRight: Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 1), (kk) => Number(kk)))
+                };
+            }
+            maxBlock = g3Bay.compactBlockNum;
+        }
+
+        //Get accum up & down the vessel
+        icb[1].maxLeftUp = icb[1].posLeft;
+        icb[1].maxRightUp = icb[1].posRight;
+        icb[maxBlock].maxLeftDown = icb[maxBlock].posLeft;
+        icb[maxBlock].maxRightDown = icb[maxBlock].posRight;
+
+        for (j = 2, lenJ = maxBlock + 1; j < lenJ; j += 1) {
+
+            icb[j].maxLeftUp = Math.max( icb[j - 1].maxLeftUp, icb[j].posLeft );
+            icb[j].maxRightUp = Math.max( icb[j - 1].maxRightUp, icb[j].posRight );
+
+            icb[lenJ - j].maxLeftDown = Math.max( icb[lenJ - j + 1].maxLeftDown, icb[lenJ - j].posLeft );
+            icb[lenJ - j].maxRightDown = Math.max( icb[lenJ - j + 1].maxRightDown, icb[lenJ - j].posRight );
+
+        }
+
+        //Create vessel shape (oval type: few-more-few). Define "borders"
+        for (j = 1, lenJ = maxBlock + 1; j < lenJ; j += 1) {
+            icb[j].maxLeft = Number(Math.min( icb[j].maxLeftUp, icb[j].maxLeftDown));
+            icb[j].maxRight = Number(Math.min( icb[j].maxRightUp, icb[j].maxRightDown));
+
+            //Even the load is not symmetric, this will make it symmetric
+            symmetricMax = Math.max(icb[j].maxLeft, icb[j].maxRight);
+
+            dd = !icb[j].maxD ? 22.5 : icb[j].maxD <= 20 ? 22.5 : icb[j].maxD <= 45 ? 45 : 60;
+            if (dd === 0) { continue; }
+
+            //Calculate hatches width and depth
+            if (j === 1) {
+                hatchesArr.push({
+                    d: dd, 
+                    l: icb[j].maxLeft,
+                    b: icb[j].baseBay,
+                    hts: generateHatchArray(symmetricMax + addZeroCell)
+                });
+            } else {
+                if (icb[j].maxLeft === icb[j -  1].maxLeft && icb[j].maxRight === icb[j -  1].maxRight
+                    && (hatchesArr[hatchesArr.length - 1].d + (icb[j].maxD || 45)) <= maxContsDepth) {
+                    hatchesArr[hatchesArr.length - 1].d += icb[j].maxD || 45;
+                } else {
+                    hatchesArr.push({
+                        d: dd,
+                        l: icb[j].maxLeft, 
+                        b: icb[j].baseBay,
+                        hts: generateHatchArray(symmetricMax + addZeroCell)
+                    });
+                }
+            }
+        }
+
+        //Finally Create 3D Hatches
+        z = 22.5; 
+        for (j = 0, lenJ = hatchesArr.length; j < lenJ; j += 1) {
+            block = hatchesArr[j];
+
+            hatchLine = new THREE.Group();
+            hatchLine.name = "baseBay-" + block.b;
+            hatchLine.baseBay = block.b;
+            this.hatchCovers["b" + __s__.pad(block.b,3)] = hatchLine;
+
+            posL = block.l;
+            x = (posL % 2 === 0 ? (posL / 2) : -(posL + 1) / 2) * (8 + extraSep); // x coordinate
+
+            for (let k = 0, lenK = block.hts.length; k < lenK; k += 1) {
+                hatch = block.hts[k];
+                msh = createHatch3D(hatch, block.d);
+                
+                msh.position.x = x - 2 * extraSep;
+                
+                hatchLine.add(msh);
+                x -= hatch * (8 + extraSep);
+            }
+
+            hatchLine.position.z = z;
+            hatchLine.originalZ = z;
+            hatchGroup3D.add(hatchLine);
+            z += block.d + 2 * extraSep;
+        }
+
+        this.scene.add(hatchGroup3D);
+        hatchGroup3D.position.y = 1.5;
+        
+        this.hatchDeck = hatchGroup3D;
+        
     }
 
     _createShipDeck () {

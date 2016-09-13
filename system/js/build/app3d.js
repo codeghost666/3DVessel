@@ -668,6 +668,7 @@ controlsControl = {
             lenJ,
             shipHouse = app3d.renderer3d.shipHouse,
             g3Bays = app3d.renderer3d.g3Bays,
+            hatchCovers = app3d.renderer3d.hatchCovers,
             shipHouseSpace = me.shipHouseSpace;
 
         app3d.pauseRendering();
@@ -679,6 +680,11 @@ controlsControl = {
                 if (i < shipHouse.currPosBay) {
                     bayGroup.position.z += shipHouseSpace;
                     bayGroup.originalZ += shipHouseSpace;
+
+                    if (hatchCovers[key]) {
+                        hatchCovers[key].position.z += shipHouseSpace;
+                        hatchCovers[key].originalZ += shipHouseSpace;
+                    }
                 }
             }
         }
@@ -697,6 +703,11 @@ controlsControl = {
             if (i < shipHouse.currPosBay) {
                 bayGroup.position.z -= shipHouseSpace;
                 bayGroup.originalZ -= shipHouseSpace;
+
+                if (hatchCovers[key]) {
+                    hatchCovers[key].position.z -= shipHouseSpace;
+                    hatchCovers[key].originalZ -= shipHouseSpace;
+                }
             }
         }
 
@@ -821,6 +832,7 @@ controlsControl = {
 
             me.prevnextNum = 1;
             app3d.renderer3d.simpleDeck.visible = false;
+            app3d.renderer3d.hatchDeck.visible = false;
             app3d.renderer3d.shipHouse.prevVisible = app3d.renderer3d.shipHouse.mesh.visible;
             app3d.renderer3d.shipHouse.mesh.visible = false;
             app3d.renderer3d.camera.position.set(0, app3d.data.aboveTiers.n * 14, xAdd);
@@ -846,6 +858,7 @@ controlsControl = {
             app3d.renderer3d.controls.target.z = ic.targetZ;
 
             app3d.renderer3d.simpleDeck.visible = true;
+            app3d.renderer3d.hatchDeck.visible = true;
             app3d.renderer3d.shipHouse.mesh.visible = app3d.renderer3d.shipHouse.prevVisible;
             me.prevnextCont.style.display = "none";
             me.pauseControls(false);
@@ -965,12 +978,16 @@ app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA).then(function (loadedDat
     renderer3d.controls.maxDistance = maxDepth * 1.5;
     renderer3d.controls.target.z = maxDepthHalf;
     controlsControl.initialCameraPosition.targetZ = maxDepthHalf;
-})['catch'](function (msg) {
+}, function (msg) {
     app3d._node.loadingDiv.setMessage(msg, true);
     app3d._node.loadingDiv.updateLoader(0.0, 1.0);
 });
 
-window.appVessels3D = app3d;
+/*
+.catch(function(msg) {
+  app3d._node.loadingDiv.setMessage(msg, true);
+  app3d._node.loadingDiv.updateLoader(0.0, 1.0);
+})*/window.appVessels3D = app3d;
 
 },{"../core/i18labels.js":3,"../core/vessels-3d.js":6,"../utils/dom-utilities.js":10,"../utils/js-helpers.js":11}],2:[function(require,module,exports){
 'use strict';
@@ -1087,6 +1104,7 @@ var DataLoader = (function () {
                 iTierMin = undefined,
                 iTierMinAbove = undefined,
                 maxWidth = 0,
+                hasZeroCell = false,
                 numContsByBay = {},
                 containersIDs = {},
                 allContainerMeshesObj = {};
@@ -1112,6 +1130,9 @@ var DataLoader = (function () {
                 if (!dataStructured[bay2].cells[ob.cell]) {
                     dataStructured[bay2].cells[ob.cell] = { tiers: {}, n: 0 };
                     dataStructured[bay2].n += 1;
+                    if (!hasZeroCell && ob.cell === "00") {
+                        hasZeroCell = true;
+                    }
                 }
                 dataStructured[bay2].cells[ob.cell].tiers[ob.tier] = ob;
                 dataStructured[bay2].cells[ob.cell].n += 1;
@@ -1241,7 +1262,8 @@ var DataLoader = (function () {
                 iTierMinAbove: iTierMinAbove,
                 maxWidth: maxWidth,
                 firstBay: _.min(_.keys(dataStructured)),
-                lastBay: _.max(_.keys(dataStructured))
+                lastBay: _.max(_.keys(dataStructured)),
+                hasZeroCell: hasZeroCell
             };
         }
     }]);
@@ -1296,7 +1318,8 @@ var ModelsFactory = (function () {
             if (!isoModels[obj.i]) {
                 isoModels[obj.i] = {
                     d: obj.depth,
-                    h: obj.h
+                    h: obj.h,
+                    t: obj.t
                 };
             }
         }
@@ -1394,9 +1417,11 @@ var Renderer3D = (function () {
         this.simpleDeck = null;
         this.hatchCover = null;
 
+        this.hatchCovers = {};
+
         this.allMaterials = [];
         this.basicMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, wireframe: true });
-        this.selectionMaterial = new THREE.MeshStandardMaterial({ color: 0x000000, opacity: 1, side: THREE.DoubleSide, transparent: false });
+        this.selectionMaterial = new THREE.MeshStandardMaterial({ color: 0x000000, opacity: 1, transparent: false });
     }
 
     _createClass(Renderer3D, [{
@@ -1559,7 +1584,7 @@ var Renderer3D = (function () {
         value: function addContainerMaterial(hexColor) {
             var material = new THREE.MeshStandardMaterial({
                 color: hexColor,
-                side: THREE.DoubleSide,
+                //side: THREE.DoubleSide,
                 transparent: true,
                 opacity: 1
             });
@@ -1576,25 +1601,37 @@ var Renderer3D = (function () {
                 h,
                 obj,
                 spec,
+                cldr,
                 filters = this.appScene.data.filters,
                 geom,
                 mesh;
 
             for (key in isoModels) {
+
                 isoModel = isoModels[key];
                 h = isoModel.h;
-
-                obj = new THREE.Shape([new THREE.Vector2(0, 0), new THREE.Vector2(0, h), new THREE.Vector2(8, h), new THREE.Vector2(8, 0)]);
-
-                geom = new THREE.ExtrudeGeometry(obj, {
-                    bevelEnabled: false,
-                    steps: 1,
-                    amount: isoModel.d
-                });
-
                 spec = filters.i.obs[key];
 
-                mesh = new THREE.Mesh(geom, me.allMaterials[spec.materialPos]);
+                if (!isoModel.t) {
+                    //Not a TANK
+                    obj = new THREE.Shape([new THREE.Vector2(0, 0), new THREE.Vector2(0, h), new THREE.Vector2(8, h), new THREE.Vector2(8, 0)]);
+
+                    geom = new THREE.ExtrudeGeometry(obj, {
+                        bevelEnabled: false,
+                        steps: 1,
+                        amount: isoModel.d
+                    });
+
+                    mesh = new THREE.Mesh(geom, me.allMaterials[spec.materialPos]);
+                } else {
+                    //A tank               
+                    geom = new THREE.CylinderGeometry(4, 4, isoModel.d, 16);
+                    mesh = new THREE.Mesh(geom, me.allMaterials[spec.materialPos]);
+                    geom.translate(-4, isoModel.d / 2, -4);
+                    mesh.rotation.z = -Math.PI / 2; //Cilinder is upSided
+                    mesh.rotation.y = -Math.PI / 2;
+                }
+
                 mesh.materialPos = spec.materialPos;
                 mesh.dynamic = true;
                 this.models[key] = mesh;
@@ -1638,8 +1675,8 @@ var Renderer3D = (function () {
                 extraAdd = undefined,
                 hasZeroRow = undefined,
                 isOdd = undefined,
-                floorAbove = 3,
-                floorBelow = 3 - extraSep,
+                floorAbove = 4,
+                floorBelow = 4 - extraSep,
                 lastBay = undefined,
                 iBay = undefined,
                 iCell = undefined,
@@ -1749,11 +1786,202 @@ var Renderer3D = (function () {
 
             me._createShipDeck();
             me._createHouse(aboveTiers.n);
+            me._createHatchCovers();
 
             loadingDiv.stopAnimation();
             setTimeout(function () {
                 loadingDiv.hide();
             }, 500);
+        }
+    }, {
+        key: '_createHatchCovers',
+        value: function _createHatchCovers() {
+            var extraSep = this.appScene.options.extraSep,
+                maxWidth = this.maxWidth,
+                maxDepth = this.maxDepth,
+                maxWidthFeet = maxWidth * (8 + extraSep),
+                dataStructured = this.appScene.data.dataStructured,
+                g3Bays = this.g3Bays,
+                lastBay = this.appScene.data.lastBay,
+                addZeroCell = this.appScene.data.hasZeroCell ? 1 : 0,
+                hatchesArr = [],
+                j = undefined,
+                lenJ = undefined,
+                key = undefined,
+                g3Bay = undefined,
+                icb = [],
+                icbn = undefined,
+                maxBlock = 0,
+                symmetricMax = undefined,
+                hatchGroup3D = new THREE.Group(),
+                msh = undefined,
+                block = undefined,
+                hatch = undefined,
+                posL = undefined,
+                x = undefined,
+                z = undefined,
+                dd = undefined,
+                hatchLine = undefined,
+                materialHatch = new THREE.MeshStandardMaterial({ color: 0x666666 });
+
+            var maxContsDepth = 60;
+
+            function generateHatchArray(w) {
+                var hatchNum = undefined,
+                    hatchNumInt = undefined,
+                    hatchWidth = undefined,
+                    hatchDiff = undefined,
+                    arrHatchesWidth = undefined;
+
+                hatchWidth = w === 5 || w === 6 || w === 9 ? 3 : w <= 4 ? w : 4;
+                hatchNum = w / hatchWidth;
+                hatchNumInt = Math.ceil(hatchNum);
+                arrHatchesWidth = new Array(hatchNumInt);
+
+                //Fill array
+                for (var _j = 0; _j < hatchNumInt; _j += 1) {
+                    arrHatchesWidth[_j] = hatchWidth;
+                }
+                hatchDiff = Math.ceil((hatchNum - Math.floor(hatchNum)) * hatchWidth);
+                if (hatchDiff > 0) {
+                    arrHatchesWidth[Math.floor(hatchNumInt / 2)] = hatchDiff;
+                }
+
+                return arrHatchesWidth;
+            }
+
+            function createHatch3D(w, d) {
+                var obj = undefined,
+                    geom = undefined,
+                    mesh = undefined,
+                    wFeet = w * (8 + extraSep) - extraSep;
+
+                obj = new THREE.Shape([new THREE.Vector2(-wFeet, 0), new THREE.Vector2(-wFeet, d), new THREE.Vector2(0, d), new THREE.Vector2(0, 0)]);
+
+                geom = new THREE.ExtrudeGeometry(obj, {
+                    bevelEnabled: false,
+                    steps: 1,
+                    amount: 3
+                });
+
+                mesh = new THREE.Mesh(geom, materialHatch);
+                mesh.rotation.x = Math.PI / 2;
+                geom.translate(8.5 + extraSep, 0, 0);
+                return mesh;
+            }
+
+            //Generate info of widths per Block (width, depth)
+            for (j = 1; j <= lastBay + 1; j += 2) {
+                key = __s__.pad(j, 3);
+                g3Bay = g3Bays["b" + key];
+                if (!g3Bay) {
+                    continue;
+                }
+
+                if (!icb[g3Bay.compactBlockNum] || icb[g3Bay.compactBlockNum].cells < dataStructured[key].n) {
+                    icb[g3Bay.compactBlockNum] = {
+                        baseBay: g3Bay.iBay,
+                        cbn: g3Bay.compactBlockNum,
+                        cells: dataStructured[key].n,
+                        maxD: dataStructured[key].maxD,
+                        posLeft: Number(_.max(_.filter(_(dataStructured[key].cells).keys(), function (k) {
+                            return Number(k) % 2 === 0;
+                        }), function (kk) {
+                            return Number(kk);
+                        })),
+                        posRight: Number(_.max(_.filter(_(dataStructured[key].cells).keys(), function (k) {
+                            return Number(k) % 2 === 1;
+                        }), function (kk) {
+                            return Number(kk);
+                        }))
+                    };
+                }
+                maxBlock = g3Bay.compactBlockNum;
+            }
+
+            //Get accum up & down the vessel
+            icb[1].maxLeftUp = icb[1].posLeft;
+            icb[1].maxRightUp = icb[1].posRight;
+            icb[maxBlock].maxLeftDown = icb[maxBlock].posLeft;
+            icb[maxBlock].maxRightDown = icb[maxBlock].posRight;
+
+            for (j = 2, lenJ = maxBlock + 1; j < lenJ; j += 1) {
+
+                icb[j].maxLeftUp = Math.max(icb[j - 1].maxLeftUp, icb[j].posLeft);
+                icb[j].maxRightUp = Math.max(icb[j - 1].maxRightUp, icb[j].posRight);
+
+                icb[lenJ - j].maxLeftDown = Math.max(icb[lenJ - j + 1].maxLeftDown, icb[lenJ - j].posLeft);
+                icb[lenJ - j].maxRightDown = Math.max(icb[lenJ - j + 1].maxRightDown, icb[lenJ - j].posRight);
+            }
+
+            //Create vessel shape (oval type: few-more-few). Define "borders"
+            for (j = 1, lenJ = maxBlock + 1; j < lenJ; j += 1) {
+                icb[j].maxLeft = Number(Math.min(icb[j].maxLeftUp, icb[j].maxLeftDown));
+                icb[j].maxRight = Number(Math.min(icb[j].maxRightUp, icb[j].maxRightDown));
+
+                //Even the load is not symmetric, this will make it symmetric
+                symmetricMax = Math.max(icb[j].maxLeft, icb[j].maxRight);
+
+                dd = !icb[j].maxD ? 22.5 : icb[j].maxD <= 20 ? 22.5 : icb[j].maxD <= 45 ? 45 : 60;
+                if (dd === 0) {
+                    continue;
+                }
+
+                //Calculate hatches width and depth
+                if (j === 1) {
+                    hatchesArr.push({
+                        d: dd,
+                        l: icb[j].maxLeft,
+                        b: icb[j].baseBay,
+                        hts: generateHatchArray(symmetricMax + addZeroCell)
+                    });
+                } else {
+                    if (icb[j].maxLeft === icb[j - 1].maxLeft && icb[j].maxRight === icb[j - 1].maxRight && hatchesArr[hatchesArr.length - 1].d + (icb[j].maxD || 45) <= maxContsDepth) {
+                        hatchesArr[hatchesArr.length - 1].d += icb[j].maxD || 45;
+                    } else {
+                        hatchesArr.push({
+                            d: dd,
+                            l: icb[j].maxLeft,
+                            b: icb[j].baseBay,
+                            hts: generateHatchArray(symmetricMax + addZeroCell)
+                        });
+                    }
+                }
+            }
+
+            //Finally Create 3D Hatches
+            z = 22.5;
+            for (j = 0, lenJ = hatchesArr.length; j < lenJ; j += 1) {
+                block = hatchesArr[j];
+
+                hatchLine = new THREE.Group();
+                hatchLine.name = "baseBay-" + block.b;
+                hatchLine.baseBay = block.b;
+                this.hatchCovers["b" + __s__.pad(block.b, 3)] = hatchLine;
+
+                posL = block.l;
+                x = (posL % 2 === 0 ? posL / 2 : -(posL + 1) / 2) * (8 + extraSep); // x coordinate
+
+                for (var k = 0, lenK = block.hts.length; k < lenK; k += 1) {
+                    hatch = block.hts[k];
+                    msh = createHatch3D(hatch, block.d);
+
+                    msh.position.x = x - 2 * extraSep;
+
+                    hatchLine.add(msh);
+                    x -= hatch * (8 + extraSep);
+                }
+
+                hatchLine.position.z = z;
+                hatchLine.originalZ = z;
+                hatchGroup3D.add(hatchLine);
+                z += block.d + 2 * extraSep;
+            }
+
+            this.scene.add(hatchGroup3D);
+            hatchGroup3D.position.y = 1.5;
+
+            this.hatchDeck = hatchGroup3D;
         }
     }, {
         key: '_createShipDeck',

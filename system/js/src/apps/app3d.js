@@ -593,6 +593,7 @@ controlsControl = {
             bays, j, lenJ,
             shipHouse = app3d.renderer3d.shipHouse,
             g3Bays = app3d.renderer3d.g3Bays,
+            hatchCovers = app3d.renderer3d.hatchCovers,
             shipHouseSpace = me.shipHouseSpace;
         
         app3d.pauseRendering();
@@ -604,6 +605,11 @@ controlsControl = {
                 if(i < shipHouse.currPosBay) {
                     bayGroup.position.z += shipHouseSpace;
                     bayGroup.originalZ += shipHouseSpace;
+
+                    if (hatchCovers[key]) {
+                        hatchCovers[key].position.z += shipHouseSpace;
+                        hatchCovers[key].originalZ += shipHouseSpace;
+                    }
                 }
             }
         }
@@ -622,6 +628,12 @@ controlsControl = {
             if(i < shipHouse.currPosBay) {
                 bayGroup.position.z -= shipHouseSpace;
                 bayGroup.originalZ -= shipHouseSpace;
+
+                if (hatchCovers[key]) {
+                    hatchCovers[key].position.z -= shipHouseSpace;
+                    hatchCovers[key].originalZ -= shipHouseSpace;
+                }
+                
             }
         }            
                     
@@ -733,6 +745,7 @@ controlsControl = {
 
             me.prevnextNum = 1;
             app3d.renderer3d.simpleDeck.visible = false;
+            app3d.renderer3d.hatchDeck.visible = false;
             app3d.renderer3d.shipHouse.prevVisible = app3d.renderer3d.shipHouse.mesh.visible;
             app3d.renderer3d.shipHouse.mesh.visible = false;
             app3d.renderer3d.camera.position.set(0, app3d.data.aboveTiers.n * 14, xAdd);
@@ -756,6 +769,7 @@ controlsControl = {
             app3d.renderer3d.controls.target.z = ic.targetZ;
 
             app3d.renderer3d.simpleDeck.visible = true;
+            app3d.renderer3d.hatchDeck.visible = true;
             app3d.renderer3d.shipHouse.mesh.visible = app3d.renderer3d.shipHouse.prevVisible;
             me.prevnextCont.style.display = "none";
             me.pauseControls(false);
@@ -864,10 +878,13 @@ app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA)
             renderer3d.controls.target.z = maxDepthHalf;
             controlsControl.initialCameraPosition.targetZ = maxDepthHalf;
 
-        })
+        }, function(msg) {
+            app3d._node.loadingDiv.setMessage(msg, true);
+            app3d._node.loadingDiv.updateLoader(0.0, 1.0);
+        })/*
         .catch(function(msg) {
             app3d._node.loadingDiv.setMessage(msg, true);
             app3d._node.loadingDiv.updateLoader(0.0, 1.0);
-        });
+        })*/;
 
 window.appVessels3D = app3d;

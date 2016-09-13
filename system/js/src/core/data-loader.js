@@ -85,6 +85,7 @@ export class DataLoader {
             data, dataStructured, filters,
             iTierMin, iTierMinAbove,
             maxWidth = 0,
+            hasZeroCell = false,
             numContsByBay = {},
             containersIDs = {}, allContainerMeshesObj = {};
             
@@ -106,6 +107,7 @@ export class DataLoader {
             if (!dataStructured[bay2].cells[ob.cell]) {
                 dataStructured[bay2].cells[ob.cell] = { tiers: {}, n: 0};
                 dataStructured[bay2].n += 1;
+                if (!hasZeroCell && ob.cell === "00") { hasZeroCell = true; }
             }
             dataStructured[bay2].cells[ob.cell].tiers[ob.tier] = ob;
             dataStructured[bay2].cells[ob.cell].n += 1;
@@ -211,7 +213,8 @@ export class DataLoader {
             iTierMinAbove,
             maxWidth,
             firstBay: _.min(_.keys(dataStructured)),
-            lastBay: _.max(_.keys(dataStructured))
+            lastBay: _.max(_.keys(dataStructured)),
+            hasZeroCell
         };                           
                     
     }
