@@ -113,28 +113,26 @@ canvas {
 
 .prevnext {
   position: absolute;
-  top: 50%;
-  width: 90px;
-  height: 50px;
-  line-height: 50px;
+  bottom: 5%;
+  width: 150px;
+  height: 40px;
+  line-height: 40px;
   z-index: 100;
   border-radius: 3px;
-  background: #999;
+  transform: translateZ(0);
+  background: #aaa;
   color: #fff;
   text-align: center;
   font-size: 12px;
   font-weight: bold;
   text-transform: uppercase; }
   .prevnext.active {
-    background: #444;
+    background: #000;
     cursor: pointer; }
   .prevnext.bay-prev {
-    left: 20px;
-    display: none; }
+    left: 22%; }
   .prevnext.bay-next {
-    right: 20px; }
-  .prevnext:hover {
-    background: #000; }
+    right: 22%; }
 
 .bay-panel {
   position: absolute;

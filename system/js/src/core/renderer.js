@@ -159,7 +159,7 @@ export class Renderer3D {
         return holder;         
     }
 
-    _addLabelsToBay(bay, posY, posZ) {
+    _addLabelsToBay(bay, posY, posZ, fwdStr = "FWD", aftStr = "AFT") {
         let holderLabels,
             aboveTiersN = this.appScene.data.aboveTiers.n,
             extraSep = this.appScene.options.extraSep,
@@ -171,7 +171,7 @@ export class Renderer3D {
         bay.labelsCanBeVisible = true;
 
         //Create FWD/AFT Labels
-        let textMesh = new SpriteText2D("FWD", { 
+        let textMesh = new SpriteText2D(fwdStr, { 
             align: textAlign.center,
             font: '32px Arial', 
             fillStyle: '#888888'});
@@ -180,7 +180,7 @@ export class Renderer3D {
         textMesh.scale.set(labelScale, labelScale, 1);
         holderLabels.add(textMesh);
 
-        textMesh = new SpriteText2D("AFT", { 
+        textMesh = new SpriteText2D(aftStr, { 
             align: textAlign.center,
             font: '32px Arial', 
             fillStyle: '#888888'});
@@ -194,6 +194,7 @@ export class Renderer3D {
         bay.labels = holderLabels;
         holderLabels.position.y = posY;   
         holderLabels.position.z = posZ;   
+        //holderLabels.position.x = 3;   
 
     }
 

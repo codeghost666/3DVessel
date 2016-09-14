@@ -782,7 +782,7 @@ controlsControl = {
             maxWidth = app3d.renderer3d.maxWidth,
             extraSep = app3d.options.extraSep,
             xAdd = maxWidth * (9.5 + extraSep) * 1.5,
-            xAccum = -xAdd,
+            xAccum = xAdd,
             visib = true,
             lastBay = app3d.data.lastBay;
 
@@ -834,7 +834,7 @@ controlsControl = {
                 cbbj = me.numContsByBlock[g3Bay.compactBlockNum];
 
                 if (g3Bay.isBlockStart && cbbj.n) {
-                    xAccum += xAdd;
+                    xAccum -= xAdd;
                     g3Bay.labels.visible = true;
                 }
 
@@ -844,11 +844,13 @@ controlsControl = {
             }
 
             me.prevnextNum = 1;
+            me.expandedArrowPrev.className = "prevnext bay-prev noselect ";
+
             app3d.renderer3d.simpleDeck.visible = false;
             app3d.renderer3d.hatchDeck.visible = false;
             app3d.renderer3d.shipHouse.prevVisible = app3d.renderer3d.shipHouse.mesh.visible;
             app3d.renderer3d.shipHouse.mesh.visible = false;
-            app3d.renderer3d.camera.position.set(0, app3d.data.aboveTiers.n * 12, xAdd);
+            app3d.renderer3d.camera.position.set(0, /*app3d.data.aboveTiers.n * 0*/-2, -xAdd * 0.8);
             app3d.renderer3d.controls.target.set(0, 0, 20);
             me.prevnextCont.style.display = "block";
 
@@ -923,8 +925,8 @@ controlsControl = {
                 }
             } while (me.numContsByBlock[newBlockNum].n <= 0);
 
-            me.expandedArrowPrev.style.display = newBlockNum > 1 ? "block" : "none";
-            me.expandedArrowNext.style.display = newBlockNum === app3d.renderer3d.maxCompactBlockNums ? "none" : "block";
+            me.expandedArrowPrev.className = "prevnext bay-prev noselect " + (newBlockNum > 1 ? "active" : "");
+            me.expandedArrowNext.className = "prevnext bay-next noselect " + (newBlockNum === app3d.renderer3d.maxCompactBlockNums ? "" : "active");
 
             for (j = 1; j <= lastBay + 1; j += 1) {
                 key = __s__.pad(j, 3);
@@ -1027,7 +1029,7 @@ app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA).then(function (loadedDat
     //Reposition camera
     maxDepth = renderer3d.maxDepth;
     maxDepthHalf = Math.round(maxDepth / 2);
-    controlsControl.initialCameraPosition = renderer3d.setCameraPosition(Math.round(maxDepth * 0.75), 350, Math.round(maxDepth * 0.5));
+    controlsControl.initialCameraPosition = renderer3d.setCameraPosition(-Math.round(maxDepth * 0.75), 350, Math.round(maxDepth * 0.5));
 
     renderer3d.controls.maxDistance = maxDepth * 1.5;
     renderer3d.controls.target.z = maxDepthHalf;
@@ -1606,6 +1608,9 @@ var Renderer3D = (function () {
     }, {
         key: '_addLabelsToBay',
         value: function _addLabelsToBay(bay, posY, posZ) {
+            var fwdStr = arguments.length <= 3 || arguments[3] === undefined ? "FWD" : arguments[3];
+            var aftStr = arguments.length <= 4 || arguments[4] === undefined ? "AFT" : arguments[4];
+
             var holderLabels = undefined,
                 aboveTiersN = this.appScene.data.aboveTiers.n,
                 extraSep = this.appScene.options.extraSep,
@@ -1617,7 +1622,7 @@ var Renderer3D = (function () {
             bay.labelsCanBeVisible = true;
 
             //Create FWD/AFT Labels
-            var textMesh = new SpriteText2D("FWD", {
+            var textMesh = new SpriteText2D(fwdStr, {
                 align: textAlign.center,
                 font: '32px Arial',
                 fillStyle: '#888888' });
@@ -1626,7 +1631,7 @@ var Renderer3D = (function () {
             textMesh.scale.set(labelScale, labelScale, 1);
             holderLabels.add(textMesh);
 
-            textMesh = new SpriteText2D("AFT", {
+            textMesh = new SpriteText2D(aftStr, {
                 align: textAlign.center,
                 font: '32px Arial',
                 fillStyle: '#888888' });
@@ -1640,6 +1645,7 @@ var Renderer3D = (function () {
             bay.labels = holderLabels;
             holderLabels.position.y = posY;
             holderLabels.position.z = posZ;
+            //holderLabels.position.x = 3; 
         }
     }, {
         key: 'addContainerMaterial',

@@ -702,7 +702,7 @@ controlsControl = {
             maxWidth = app3d.renderer3d.maxWidth,
             extraSep = app3d.options.extraSep,
             xAdd =  maxWidth * (9.5 + extraSep) * 1.5,
-            xAccum = -xAdd,
+            xAccum = xAdd,
             visib = true,
             lastBay = app3d.data.lastBay;
 
@@ -746,7 +746,7 @@ controlsControl = {
                 cbbj = me.numContsByBlock[g3Bay.compactBlockNum];
 
                 if (g3Bay.isBlockStart && cbbj.n) {
-                    xAccum += xAdd;
+                    xAccum -= xAdd;
                     g3Bay.labels.visible = true;
                 }
 
@@ -756,11 +756,13 @@ controlsControl = {
             }
 
             me.prevnextNum = 1;
+            me.expandedArrowPrev.className = "prevnext bay-prev noselect ";
+
             app3d.renderer3d.simpleDeck.visible = false;
             app3d.renderer3d.hatchDeck.visible = false;
             app3d.renderer3d.shipHouse.prevVisible = app3d.renderer3d.shipHouse.mesh.visible;
             app3d.renderer3d.shipHouse.mesh.visible = false;
-            app3d.renderer3d.camera.position.set(0, app3d.data.aboveTiers.n * 12, xAdd);
+            app3d.renderer3d.camera.position.set(0, /*app3d.data.aboveTiers.n * 0*/ -2, -xAdd * 0.8);
             app3d.renderer3d.controls.target.set(0, 0, 20);
             me.prevnextCont.style.display = "block";
 
@@ -823,8 +825,8 @@ controlsControl = {
                 if (newBlockNum <= 0 || newBlockNum > app3d.renderer3d.maxCompactBlockNums) { return null; }
             } while (me.numContsByBlock[newBlockNum].n <= 0);
 
-            me.expandedArrowPrev.style.display = newBlockNum > 1 ? "block" : "none";
-            me.expandedArrowNext.style.display = newBlockNum === app3d.renderer3d.maxCompactBlockNums ? "none" : "block";
+            me.expandedArrowPrev.className = "prevnext bay-prev noselect " + (newBlockNum > 1 ? "active" : "");
+            me.expandedArrowNext.className = "prevnext bay-next noselect " + (newBlockNum === app3d.renderer3d.maxCompactBlockNums ? "" : "active");
 
             for (j = 1; j <= lastBay + 1; j += 1) {
                 key = __s__.pad(j, 3);
@@ -922,7 +924,7 @@ app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA)
             //Reposition camera
             maxDepth = renderer3d.maxDepth;
             maxDepthHalf = Math.round(maxDepth / 2);
-            controlsControl.initialCameraPosition = renderer3d.setCameraPosition(Math.round(maxDepth * 0.75), 350, Math.round(maxDepth * 0.5));
+            controlsControl.initialCameraPosition = renderer3d.setCameraPosition(-Math.round(maxDepth * 0.75), 350, Math.round(maxDepth * 0.5));
 
             renderer3d.controls.maxDistance = maxDepth * 1.5;
             renderer3d.controls.target.z = maxDepthHalf;
