@@ -129,7 +129,8 @@ canvas {
     background: #444;
     cursor: pointer; }
   .prevnext.bay-prev {
-    left: 20px; }
+    left: 20px;
+    display: none; }
   .prevnext.bay-next {
     right: 20px; }
   .prevnext:hover {
@@ -222,11 +223,11 @@ canvas {
   z-index: 30;
   transform: translate3d(0, 0, 0);
   overflow-y: scroll; }
-  .info-panel .info-window, .info-panel .coloring, .info-panel .filtering, .info-panel .instructions, .info-panel .onlybay, .info-panel .add-house, .info-panel .expand-view {
+  .info-panel .info-window, .info-panel .coloring, .info-panel .filtering, .info-panel .instructions, .info-panel .onlybay, .info-panel .add-house, .info-panel .expand-view, .info-panel .view-hcs {
     width: 100%;
     padding: 5px 7px;
     box-sizing: border-box; }
-    .info-panel .info-window h3, .info-panel .coloring h3, .info-panel .filtering h3, .info-panel .instructions h3, .info-panel .onlybay h3, .info-panel .add-house h3, .info-panel .expand-view h3 {
+    .info-panel .info-window h3, .info-panel .coloring h3, .info-panel .filtering h3, .info-panel .instructions h3, .info-panel .onlybay h3, .info-panel .add-house h3, .info-panel .expand-view h3, .info-panel .view-hcs h3 {
       font-size: 12px;
       margin: 0;
       font-style: italic; }
@@ -239,13 +240,19 @@ canvas {
       font-size: 70%;
       color: #ccc; }
   .info-panel .expand-view {
-    background: #4b19a8;
+    background: #3e62c6;
+    color: #fff;
+    padding-bottom: 3px;
+    font-size: 12px;
+    text-transform: uppercase; }
+  .info-panel .view-hcs {
+    background: #243b7a;
     color: #fff;
     padding-bottom: 3px;
     font-size: 12px;
     text-transform: uppercase; }
   .info-panel .add-house {
-    background: #333333;
+    background: #2f4ea2;
     color: #fff;
     padding-bottom: 3px; }
   .info-panel .onlybay {

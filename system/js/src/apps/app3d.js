@@ -31,6 +31,7 @@ controlsControl = {
     prevnextCont: null,
     prevnextNum: 1,
     numContsByBlock: null,
+    hatchDecksVisible: true,
 
     init: function (){
         let ctrlColors = document.getElementById("dropColors"),
@@ -65,6 +66,7 @@ controlsControl = {
         __d__.addEventLnr(me.showWireframes, "change", me.listenWireframeDisplay);
         __d__.addEventLnr(window, "keydown", me.checkKeyPressed);
         __d__.addEventLnr(me.expandViewBtn, "change", me.expandView);
+        __d__.addEventLnr(document.getElementById("view-hcs"), "change", me.toggleHatchCovers);
 
         __d__.addEventLnr(document.getElementById("bay-next"), "click", me.expandViewNext);
         __d__.addEventLnr(document.getElementById("bay-prev"), "click", me.expandViewPrev);
@@ -287,9 +289,12 @@ controlsControl = {
         me.dropFilter.removeAttribute("disabled");
         if(prevAttr !== "disabled") { me.dropFilterValue.removeAttribute("disabled"); }
         me.showWireframes.removeAttribute("disabled");
-        me.dropBays.removeAttribute("disabled");
-        me.dropAddHouse.removeAttribute("disabled");
-        
+
+        if (!me.isExpanded) {
+            me.dropBays.removeAttribute("disabled");
+            me.dropAddHouse.removeAttribute("disabled");
+        }
+
     },
 
     colorize: function (e) {
@@ -705,7 +710,7 @@ controlsControl = {
         function calculateContsByBlock() {
             if (me.numContsByBlock) { return; }
 
-            let ncbb = {}, j,
+            let ncbb = {}, j, key,
                 numContsByBay = app3d.data.numContsByBay;
 
             for (j = 1; j <= lastBay + 1; j += 1) {
@@ -713,16 +718,22 @@ controlsControl = {
                 g3Bay = g3Bays["b" + key];
                 if (!g3Bay) { continue; }
                 if (!ncbb[g3Bay.compactBlockNum]) {
-                    ncbb[g3Bay.compactBlockNum] = 0;
+                    ncbb[g3Bay.compactBlockNum] = { n: 0 };
                 }
-                ncbb[g3Bay.compactBlockNum] += numContsByBay[key] || 0;
+
+                ncbb[g3Bay.compactBlockNum].n += numContsByBay[key] || 0;           
             }
+
             me.numContsByBlock = ncbb;
         }            
 
         //Expands the bays horizontally
         function expandBays() {
-            me.pauseControls(true);
+            let cbbj;
+
+            me.dropBays.setAttribute("disabled", "disabled");
+            me.dropAddHouse.setAttribute("disabled", "disabled");
+            
             if (me.baySelected !== "") {
                 me.openBayInfo.style.left = "-300px";
             }
@@ -730,10 +741,11 @@ controlsControl = {
             for (j = 1; j <= lastBay + 1; j += 1) {
                 key = __s__.pad(j, 3);
                 g3Bay = g3Bays["b" + key];
-
+                
                 if (!g3Bay) { continue; }
+                cbbj = me.numContsByBlock[g3Bay.compactBlockNum];
 
-                if (g3Bay.isBlockStart && me.numContsByBlock[g3Bay.compactBlockNum]) {
+                if (g3Bay.isBlockStart && cbbj.n) {
                     xAccum += xAdd;
                     g3Bay.labels.visible = true;
                 }
@@ -748,9 +760,11 @@ controlsControl = {
             app3d.renderer3d.hatchDeck.visible = false;
             app3d.renderer3d.shipHouse.prevVisible = app3d.renderer3d.shipHouse.mesh.visible;
             app3d.renderer3d.shipHouse.mesh.visible = false;
-            app3d.renderer3d.camera.position.set(0, app3d.data.aboveTiers.n * 14, xAdd);
+            app3d.renderer3d.camera.position.set(0, app3d.data.aboveTiers.n * 12, xAdd);
             app3d.renderer3d.controls.target.set(0, 0, 20);
             me.prevnextCont.style.display = "block";
+
+            me._showBaysHatchCovers(me.hatchDecksVisible);
         }
 
         function contractBays() {
@@ -769,12 +783,16 @@ controlsControl = {
             app3d.renderer3d.controls.target.z = ic.targetZ;
 
             app3d.renderer3d.simpleDeck.visible = true;
-            app3d.renderer3d.hatchDeck.visible = true;
+            app3d.renderer3d.hatchDeck.visible = me.hatchDecksVisible;
             app3d.renderer3d.shipHouse.mesh.visible = app3d.renderer3d.shipHouse.prevVisible;
+            
             me.prevnextCont.style.display = "none";
             me.pauseControls(false);
             
         }
+
+        me.expandedArrowPrev = document.getElementById("bay-prev");
+        me.expandedArrowNext = document.getElementById("bay-next");
 
         calculateContsByBlock();
         me.isExpanded = doExpand;
@@ -803,7 +821,10 @@ controlsControl = {
             do {
                 newBlockNum = newBlockNum + (next ? 1 : -1);
                 if (newBlockNum <= 0 || newBlockNum > app3d.renderer3d.maxCompactBlockNums) { return null; }
-            } while (me.numContsByBlock[newBlockNum] <= 0);
+            } while (me.numContsByBlock[newBlockNum].n <= 0);
+
+            me.expandedArrowPrev.style.display = newBlockNum > 1 ? "block" : "none";
+            me.expandedArrowNext.style.display = newBlockNum === app3d.renderer3d.maxCompactBlockNums ? "none" : "block";
 
             for (j = 1; j <= lastBay + 1; j += 1) {
                 key = __s__.pad(j, 3);
@@ -811,7 +832,7 @@ controlsControl = {
 
                 if (!g3Bay) { continue; } 
                 if (g3Bay.compactBlockNum === newBlockNum) {
-                    if (me.numContsByBlock[g3Bay.compactBlockNum]) { 
+                    if (me.numContsByBlock[g3Bay.compactBlockNum].n) { 
                         return g3Bay;
                     }
                 }
@@ -827,6 +848,35 @@ controlsControl = {
         TweenLite.to(app3d.renderer3d.controls.target, timing, {x: gBay.position.x, ease: Power2.easeInOut});
 
         me.prevnextNum = newBlockNum;        
+    },
+
+    toggleHatchCovers (ev) {
+        let me = controlsControl,
+            v = ev.target.checked,
+            hcs = app3d.renderer3d.hatchDeck;
+
+        me.hatchDecksVisible = v;
+
+        if (!me.isExpanded) {
+            hcs.visible = v;
+            me._showBaysHatchCovers(false);
+        } else {
+            hcs.visible = false;
+            me._showBaysHatchCovers(v);
+        }
+    },
+
+    _showBaysHatchCovers(s) {
+        let key, g3Bay,
+            g3Bays = app3d.renderer3d.g3Bays;
+            
+        for (key in g3Bays) {
+            g3Bay = g3Bays[key];
+            if (!g3Bay.isBlockStart) { continue; }
+            if (g3Bay.hatchC) {
+                g3Bay.hatchC.visible = s;
+            }
+        }
     }
 
     

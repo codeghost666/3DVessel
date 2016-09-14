@@ -43,8 +43,9 @@ export class Renderer3D {
 
         this.allMaterials = [];
         this.basicMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, transparent: true, opacity: 0.3, wireframe: true } );
-        this.selectionMaterial = new THREE.MeshStandardMaterial( { color: 0x000000,  opacity: 1, transparent: false} );
+        this.selectionMaterial = new THREE.MeshStandardMaterial( { color: 0x000000, side: THREE.DoubleSide, opacity: 1, transparent: false} );
         
+        this.containersGroup = null;
     }
 
     init() {
@@ -129,6 +130,10 @@ export class Renderer3D {
         this.scene.add(light);
         this.scene.add(lightsGroup);
 
+        let containersGroup = new THREE.Object3D();
+        this.scene.add(containersGroup);
+        this.containersGroup = containersGroup;
+        
         __d__.addEventLnr(window, "mousemove", function (e) {
             me.mouseVector.x = (e.clientX / me.width) * 2 - 1;
             me.mouseVector.y = -(e.clientY / me.height) * 2 + 1;
@@ -137,7 +142,7 @@ export class Renderer3D {
 
     createBay(k) {
         let me = this, 
-            holder;
+            holder, bbox, hatchC;
 
         if (me.g3Bays["b" + k]) { return me.g3Bays["b" + k]; }
 
@@ -149,7 +154,7 @@ export class Renderer3D {
 
         //Add to bays-array & scene
         me.g3Bays["b" + k] = holder;
-        me.scene.add(holder);
+        me.containersGroup.add(holder);
 
         return holder;         
     }
@@ -195,7 +200,7 @@ export class Renderer3D {
     addContainerMaterial (hexColor) {
         let material = new THREE.MeshStandardMaterial({ 
             color: hexColor,
-            //side: THREE.DoubleSide,
+            side: THREE.DoubleSide,
             transparent: true,
             opacity: 1
         });
@@ -277,6 +282,7 @@ export class Renderer3D {
             tmpArr = [],
             compactBlockNum, keyEven, keyEvenPrev, bayEven, numContsByBlock = {},
 
+            materialHatch = new THREE.MeshStandardMaterial({ color: 0x666666 }),
             compareLocations = (a,b) => { a.p === b.p ? 0 : ( a.p < b.p ? -1 : 1) };           
         
         lastBay = _.max(_.keys(dataStructured));
@@ -364,7 +370,7 @@ export class Renderer3D {
             allContainerMeshesObj[point.cDash] = mesh;
             
         }
-        
+
         me._createShipDeck();
         me._createHouse(aboveTiers.n);
         me._createHatchCovers();
@@ -385,12 +391,17 @@ export class Renderer3D {
             lastBay = this.appScene.data.lastBay,
             addZeroCell =this.appScene.data.hasZeroCell ? 1 : 0,
             hatchesArr = [],
-            j, lenJ, key, g3Bay, icb = [], icbn, maxBlock = 0, symmetricMax,
+
+            j, lenJ, key, g3Bay, 
+            icb = [], icbn, 
+            maxBlock = 0, symmetricMax,
 
             hatchGroup3D = new THREE.Group(), msh, block, hatch, posL, x, z, dd, hatchLine,
             materialHatch = new THREE.MeshStandardMaterial({ color: 0x666666 });
         
         const maxContsDepth = 60;
+
+        const xCoordinate = (pos) => (pos % 2 === 0 ? (pos / 2) : -(pos + 1) / 2) * (8 + extraSep);
 
         function generateHatchArray(w) {
             let hatchNum, hatchNumInt, hatchWidth, hatchDiff, arrHatchesWidth;
@@ -446,6 +457,9 @@ export class Renderer3D {
                     posLeft: Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 0), (kk) => Number(kk))),
                     posRight: Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 1), (kk) => Number(kk)))
                 };
+            } else {
+                icb[g3Bay.compactBlockNum].posLeft = Math.max(icb[g3Bay.compactBlockNum].posLeft, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 0), (kk) => Number(kk))));
+                icb[g3Bay.compactBlockNum].posRight = Math.max(icb[g3Bay.compactBlockNum].posRight, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 1), (kk) => Number(kk))));
             }
             maxBlock = g3Bay.compactBlockNum;
         }
@@ -500,7 +514,7 @@ export class Renderer3D {
             }
         }
 
-        //Finally Create 3D Hatches
+        //Create 3D Hatches (Vessel)
         z = 22.5; 
         for (j = 0, lenJ = hatchesArr.length; j < lenJ; j += 1) {
             block = hatchesArr[j];
@@ -511,7 +525,7 @@ export class Renderer3D {
             this.hatchCovers["b" + __s__.pad(block.b,3)] = hatchLine;
 
             posL = block.l;
-            x = (posL % 2 === 0 ? (posL / 2) : -(posL + 1) / 2) * (8 + extraSep); // x coordinate
+            x = xCoordinate(posL); // x coordinate
 
             for (let k = 0, lenK = block.hts.length; k < lenK; k += 1) {
                 hatch = block.hts[k];
@@ -527,6 +541,39 @@ export class Renderer3D {
             hatchLine.originalZ = z;
             hatchGroup3D.add(hatchLine);
             z += block.d + 2 * extraSep;
+        }
+
+        //Create 3D Hatches (by Bay)
+        for (key in g3Bays) {
+            g3Bay = g3Bays[key];
+            
+            if (g3Bay.isBlockStart) {
+                icbn = icb[g3Bay.compactBlockNum];
+                if (!icbn.maxD) { continue; }
+
+                let xL = xCoordinate(icbn.maxLeft), 
+                    xR = xCoordinate(icbn.maxRight);
+
+                //Add hatchC
+                let obj = new THREE.Shape([
+                    new THREE.Vector2( xL + addZeroCell * (8 + extraSep), 0 ),
+                    new THREE.Vector2( xR, 0 ),
+                    new THREE.Vector2( xR, icbn.maxD ),
+                    new THREE.Vector2( xL + addZeroCell * (8 + extraSep), icbn.maxD )
+                ]);
+                
+                let geom = new THREE.ExtrudeGeometry( obj, { 
+                    bevelEnabled: false,
+                    steps: 1,
+                    amount: 2
+                });
+                let mesh = new THREE.Mesh( geom, materialHatch );
+                mesh.rotation.x = Math.PI / 2;
+                mesh.position.y = 1;
+                mesh.visible = false;
+                g3Bay.add(mesh);
+                g3Bay.hatchC = mesh;
+            }
         }
 
         this.scene.add(hatchGroup3D);
@@ -776,7 +823,7 @@ export class Renderer3D {
         if (this.frames & 1) {
 
             this.raycaster.setFromCamera(this.mouseVector.clone(), this.camera);
-            intersects = this.raycaster.intersectObjects(this.scene.children, true);
+            intersects = this.raycaster.intersectObjects(this.containersGroup.children, true);
             lenI = intersects.length;
 
             if (lenI > 1) {
