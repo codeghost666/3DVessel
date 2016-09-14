@@ -511,7 +511,7 @@ controlsControl = {
             
             if(sBay !== "") {
                 me.baySelected = sBay;
-                camZ = newZ + 250;
+                camZ = newZ - 240;
                 camY = topY;
                 camX = 0;
                 cY = topY - 10;
