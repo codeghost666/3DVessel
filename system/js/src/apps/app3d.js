@@ -44,6 +44,7 @@ controlsControl = {
         me.expandViewBtn = document.getElementById("expandView");
         me.prevnextCont = document.getElementById("prevnext-container");
         me.dropFilter = ctrlFilter;
+        me.checkboxHatchCovers = document.getElementById("view-hcs");
         
         opt = document.createElement("option");
         opt.value = ""; opt.innerHTML = "None";
@@ -66,7 +67,7 @@ controlsControl = {
         __d__.addEventLnr(me.showWireframes, "change", me.listenWireframeDisplay);
         __d__.addEventLnr(window, "keydown", me.checkKeyPressed);
         __d__.addEventLnr(me.expandViewBtn, "change", me.expandView);
-        __d__.addEventLnr(document.getElementById("view-hcs"), "change", me.toggleHatchCovers);
+        __d__.addEventLnr(me.checkboxHatchCovers, "change", me.toggleHatchCovers);
 
         __d__.addEventLnr(document.getElementById("bay-next"), "click", me.expandViewNext);
         __d__.addEventLnr(document.getElementById("bay-prev"), "click", me.expandViewPrev);
@@ -518,6 +519,8 @@ controlsControl = {
                 controls.dampingFactor = options.dampingFactorIn;
                 openBaypanelButtonZ = 30;
                 newZ += 11;
+                me.checkboxHatchCovers.setAttribute("disabled", "disabled");
+                me.expandViewBtn.setAttribute("disabled", "disabled");
             } else {
                 me.baySelected = "";
                 camZ = me.initialCameraPosition.z;
@@ -528,12 +531,13 @@ controlsControl = {
                 delayUp = 0;
                 controls.dampingFactor = options.dampingFactorOut;
                 openBaypanelButtonZ = -300;
+                me.checkboxHatchCovers.removeAttribute("disabled");
             }                     
             TweenLite.to(camPos, 1, {x: camX, y: camY, z:camZ, delay:delayUp, ease: Power2.easeInOut});
             TweenLite.to(controls.target, 2.0, { y: cY, x: 0, z: newZ, ease: Power2.easeInOut });
             TweenLite.to(me.openBayInfo, 1.0, { left: openBaypanelButtonZ, delay:delayUp * 4,  ease: Power2.easeInOut });
             setTimeout(function() {
-                me.expandViewBtn.removeAttribute("disabled");
+                if (me.baySelected === "") {  me.expandViewBtn.removeAttribute("disabled"); }
                 me.pauseControls(false);
             }, 2500);
         }
