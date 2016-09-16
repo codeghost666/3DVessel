@@ -50,6 +50,8 @@ controlsControl = {
         me.prevnextCont = document.getElementById("prevnext-container");
         me.dropFilter = ctrlFilter;
         me.checkboxHatchCovers = document.getElementById("view-hcs");
+        me.navBaysNext = document.getElementById("bay-next");
+        me.navBaysPrev = document.getElementById("bay-prev");
 
         opt = document.createElement("option");
         opt.value = "";opt.innerHTML = "None";
@@ -74,8 +76,12 @@ controlsControl = {
         __d__.addEventLnr(me.expandViewBtn, "change", me.expandView);
         __d__.addEventLnr(me.checkboxHatchCovers, "change", me.toggleHatchCovers);
 
-        __d__.addEventLnr(document.getElementById("bay-next"), "click", me.expandViewNext);
-        __d__.addEventLnr(document.getElementById("bay-prev"), "click", me.expandViewPrev);
+        __d__.addEventLnr(me.navBaysNext, "click", function () {
+            __s__.callOnCondition(me.isExpanded, me.expandViewNext, me.baysControlNext);
+        });
+        __d__.addEventLnr(me.navBaysPrev, "click", function () {
+            __s__.callOnCondition(me.isExpanded, me.expandViewPrev, me.baysControlPrev);
+        });
 
         me.addBaysControl();
         me.addHouseControl();
@@ -139,6 +145,30 @@ controlsControl = {
         __d__.addEventLnr(me.openBayInfo, "click", me.showBayInfo);
         __d__.addEventLnr(me.closeBayInfo, "click", me.showBayInfo);
         me.openBayInfo.style.left = "-300px";
+    },
+
+    baysControlNext: function baysControlNext() {
+        var me = controlsControl,
+            c = me.dropBays.selectedIndex + 1,
+            maxIndex = me.dropBays.length;
+        if (c < maxIndex) {
+            me.dropBays.selectedIndex = c;
+            me.isolateBay(me.dropBays.value);
+        }
+        me.navBaysPrev.className = "prevnext bay-prev noselect " + (c > 2 ? "active" : "");
+        me.navBaysNext.className = "prevnext bay-next noselect " + (c + 1 >= maxIndex ? "" : "active");
+    },
+
+    baysControlPrev: function baysControlPrev() {
+        var me = controlsControl,
+            c = me.dropBays.selectedIndex - 1,
+            maxIndex = me.dropBays.length;
+        if (c >= 0) {
+            me.dropBays.selectedIndex = c;
+            me.isolateBay(me.dropBays.value);
+        }
+        me.navBaysPrev.className = "prevnext bay-prev noselect " + (c > 2 ? "active" : "");
+        me.navBaysNext.className = "prevnext bay-next noselect " + (c + 1 >= maxIndex ? "" : "active");
     },
 
     addHouseControl: function addHouseControl() {
@@ -593,6 +623,13 @@ controlsControl = {
                 newZ += 11;
                 me.checkboxHatchCovers.setAttribute("disabled", "disabled");
                 me.expandViewBtn.setAttribute("disabled", "disabled");
+                app3d._bayNode.innerHTML = "<small>bay</small> " + iBay;
+
+                me.prevnextCont.style.display = "block";
+                var cbb = me.dropBays.selectedIndex,
+                    maxIndex = me.dropBays.length;
+                me.navBaysPrev.className = "prevnext bay-prev noselect " + (cbb > 1 ? "active" : "");
+                me.navBaysNext.className = "prevnext bay-next noselect " + (cbb + 1 === maxIndex ? "" : "active");
             } else {
                 me.baySelected = "";
                 camZ = me.initialCameraPosition.z;
@@ -604,6 +641,7 @@ controlsControl = {
                 controls.dampingFactor = options.dampingFactorOut;
                 openBaypanelButtonZ = -300;
                 me.checkboxHatchCovers.removeAttribute("disabled");
+                me.prevnextCont.style.display = "none";
             }
             TweenLite.to(camPos, 1, { x: camX, y: camY, z: camZ, delay: delayUp, ease: Power2.easeInOut });
             TweenLite.to(controls.target, 2.0, { y: cY, x: 0, z: newZ, ease: Power2.easeInOut });
@@ -850,7 +888,8 @@ controlsControl = {
             }
 
             me.prevnextNum = 1;
-            me.expandedArrowPrev.className = "prevnext bay-prev noselect ";
+            me.navBaysPrev.className = "prevnext bay-prev noselect ";
+            app3d._bayNode.innerHTML = "<small>bay</small> 1";
 
             app3d.renderer3d.simpleDeck.visible = false;
             app3d.renderer3d.hatchDeck.visible = false;
@@ -887,9 +926,6 @@ controlsControl = {
             me.prevnextCont.style.display = "none";
             me.pauseControls(false);
         }
-
-        me.expandedArrowPrev = document.getElementById("bay-prev");
-        me.expandedArrowNext = document.getElementById("bay-next");
 
         calculateContsByBlock();
         me.isExpanded = doExpand;
@@ -931,8 +967,8 @@ controlsControl = {
                 }
             } while (me.numContsByBlock[newBlockNum].n <= 0);
 
-            me.expandedArrowPrev.className = "prevnext bay-prev noselect " + (newBlockNum > 1 ? "active" : "");
-            me.expandedArrowNext.className = "prevnext bay-next noselect " + (newBlockNum === app3d.renderer3d.maxCompactBlockNums ? "" : "active");
+            me.navBaysPrev.className = "prevnext bay-prev noselect " + (newBlockNum > 1 ? "active" : "");
+            me.navBaysNext.className = "prevnext bay-next noselect " + (newBlockNum === app3d.renderer3d.maxCompactBlockNums ? "" : "active");
 
             for (j = 1; j <= lastBay + 1; j += 1) {
                 key = __s__.pad(j, 3);
@@ -957,6 +993,7 @@ controlsControl = {
 
         TweenLite.to(app3d.renderer3d.camera.position, timing, { x: gBay.position.x, ease: Power2.easeInOut });
         TweenLite.to(app3d.renderer3d.controls.target, timing, { x: gBay.position.x, ease: Power2.easeInOut });
+        app3d._bayNode.innerHTML = "<small>bay</small> " + gBay.iBay;
 
         me.prevnextNum = newBlockNum;
     },
@@ -2909,6 +2946,7 @@ exports.addEventDsptchr = addEventDsptchr;
 Object.defineProperty(exports, '__esModule', {
     value: true
 });
+exports.callOnCondition = callOnCondition;
 var isArray = function isArray(c) {
     return Array.isArray ? Array.isArray(c) : c instanceof Array;
 };
@@ -3000,7 +3038,18 @@ var getQueryParams = function getQueryParams() {
     }
     return params;
 };
+
 exports.getQueryParams = getQueryParams;
+
+function callOnCondition(condition, ifTrueCall, ifFalseCall) {
+    if (condition) {
+        ifTrueCall.apply(null, arguments);
+    } else {
+        ifFalseCall.apply(null, arguments);
+    }
+}
+
+;
 
 },{}],12:[function(require,module,exports){
 "use strict";

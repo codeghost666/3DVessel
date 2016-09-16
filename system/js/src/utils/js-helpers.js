@@ -70,3 +70,11 @@ export let getQueryParams = () => {
     }
     return params;
 }
+
+export function callOnCondition(condition, ifTrueCall, ifFalseCall) {
+    if (condition) {
+        ifTrueCall.apply(null, arguments);
+    } else {
+        ifFalseCall.apply(null, arguments);
+    }
+};
