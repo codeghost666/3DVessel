@@ -400,7 +400,7 @@ export class Renderer3D {
             hatchGroup3D = new THREE.Group(), msh, block, hatch, posL, x, z, dd, hatchLine,
             materialHatch = new THREE.MeshStandardMaterial({ color: 0x666666 });
         
-        const maxContsDepth = 60;
+        const maxContsDepth = 45;
 
         const xCoordinate = (pos) => (pos % 2 === 0 ? (pos / 2) : -(pos + 1) / 2) * (8 + extraSep);
 
@@ -489,7 +489,7 @@ export class Renderer3D {
             //Even the load is not symmetric, this will make it symmetric
             symmetricMax = Math.max(icb[j].maxLeft, icb[j].maxRight);
 
-            dd = !icb[j].maxD ? 22.5 : icb[j].maxD <= 20 ? 22.5 : icb[j].maxD <= 45 ? 45 : 60;
+            dd = !icb[j].maxD ? 22.5 : icb[j].maxD <= 20 ? 22.5 : 45;
             if (dd === 0) { continue; }
 
             //Calculate hatches width and depth
