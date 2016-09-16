@@ -1921,6 +1921,7 @@ var Renderer3D = (function () {
                 lenJ = undefined,
                 key = undefined,
                 g3Bay = undefined,
+                gbn = undefined,
                 icb = [],
                 icbn = undefined,
                 maxBlock = 0,
@@ -1936,7 +1937,7 @@ var Renderer3D = (function () {
                 hatchLine = undefined,
                 materialHatch = new THREE.MeshStandardMaterial({ color: 0x666666 });
 
-            var maxContsDepth = 60;
+            var maxContsDepth = 45;
 
             var xCoordinate = function xCoordinate(pos) {
                 return (pos % 2 === 0 ? pos / 2 : -(pos + 1) / 2) * (8 + extraSep);
@@ -1994,10 +1995,12 @@ var Renderer3D = (function () {
                     continue;
                 }
 
-                if (!icb[g3Bay.compactBlockNum] || icb[g3Bay.compactBlockNum].cells < dataStructured[key].n) {
-                    icb[g3Bay.compactBlockNum] = {
+                gbn = Number(g3Bay.compactBlockNum);
+
+                if (!icb[gbn]) {
+                    icb[gbn] = {
                         baseBay: g3Bay.iBay,
-                        cbn: g3Bay.compactBlockNum,
+                        cbn: gbn,
                         cells: dataStructured[key].n,
                         maxD: dataStructured[key].maxD,
                         posLeft: Number(_.max(_.filter(_(dataStructured[key].cells).keys(), function (k) {
@@ -2012,18 +2015,18 @@ var Renderer3D = (function () {
                         }))
                     };
                 } else {
-                    icb[g3Bay.compactBlockNum].posLeft = Math.max(icb[g3Bay.compactBlockNum].posLeft, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), function (k) {
+                    icb[gbn].posLeft = Math.max(icb[gbn].posLeft, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), function (k) {
                         return Number(k) % 2 === 0;
                     }), function (kk) {
                         return Number(kk);
                     })));
-                    icb[g3Bay.compactBlockNum].posRight = Math.max(icb[g3Bay.compactBlockNum].posRight, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), function (k) {
+                    icb[gbn].posRight = Math.max(icb[gbn].posRight, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), function (k) {
                         return Number(k) % 2 === 1;
                     }), function (kk) {
                         return Number(kk);
                     })));
                 }
-                maxBlock = g3Bay.compactBlockNum;
+                maxBlock = gbn;
             }
 
             //Get accum up & down the vessel
@@ -2049,7 +2052,7 @@ var Renderer3D = (function () {
                 //Even the load is not symmetric, this will make it symmetric
                 symmetricMax = Math.max(icb[j].maxLeft, icb[j].maxRight);
 
-                dd = !icb[j].maxD ? 22.5 : icb[j].maxD <= 20 ? 22.5 : icb[j].maxD <= 45 ? 45 : 60;
+                dd = !icb[j].maxD ? 22.5 : icb[j].maxD <= 20 ? 22.5 : 45;
                 if (dd === 0) {
                     continue;
                 }

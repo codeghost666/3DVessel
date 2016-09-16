@@ -393,7 +393,7 @@ export class Renderer3D {
             addZeroCell =this.appScene.data.hasZeroCell ? 1 : 0,
             hatchesArr = [],
 
-            j, lenJ, key, g3Bay, 
+            j, lenJ, key, g3Bay, gbn,
             icb = [], icbn, 
             maxBlock = 0, symmetricMax,
 
@@ -449,20 +449,22 @@ export class Renderer3D {
             g3Bay = g3Bays["b" + key];
             if (!g3Bay) { continue; }
 
-            if (!icb[g3Bay.compactBlockNum] || icb[g3Bay.compactBlockNum].cells < dataStructured[key].n) {
-                icb[g3Bay.compactBlockNum] = {
+            gbn = Number(g3Bay.compactBlockNum);
+
+            if (!icb[gbn]) {
+                icb[gbn] = {
                     baseBay: g3Bay.iBay,
-                    cbn: g3Bay.compactBlockNum,
+                    cbn: gbn,
                     cells : dataStructured[key].n,
                     maxD: dataStructured[key].maxD,
                     posLeft: Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 0), (kk) => Number(kk))),
                     posRight: Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 1), (kk) => Number(kk)))
                 };
             } else {
-                icb[g3Bay.compactBlockNum].posLeft = Math.max(icb[g3Bay.compactBlockNum].posLeft, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 0), (kk) => Number(kk))));
-                icb[g3Bay.compactBlockNum].posRight = Math.max(icb[g3Bay.compactBlockNum].posRight, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 1), (kk) => Number(kk))));
+                icb[gbn].posLeft = Math.max(icb[gbn].posLeft, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 0), (kk) => Number(kk))));
+                icb[gbn].posRight = Math.max(icb[gbn].posRight, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 1), (kk) => Number(kk))));
             }
-            maxBlock = g3Bay.compactBlockNum;
+            maxBlock = gbn;
         }
 
         //Get accum up & down the vessel
