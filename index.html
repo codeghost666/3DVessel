@@ -6,6 +6,7 @@
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<title>BAPLIE Viewer Online - 3D Vessel</title>
 		<link rel="stylesheet" href="system/css/styles.css" />
+		<link rel="stylesheet" href="system/lib/css/colorpicker/colorjoe.css" />
 	</head>
 	<body>
         <!-- --------------------------
@@ -19,8 +20,13 @@
                 <span id="bay-prev" class="prevnext bay-prev noselect ">&larr; Previous bay</span>
                 <span id="bay-next" class="prevnext bay-next active noselect ">Next bay &rarr;</span>
             </div>
+
+            <div id="app-3d-loading-div" class="app3d-loading-div">
+                <div id="app-3d-loading-div-text" class="app3d-loading-div-text"></div>
+                <img src="system/images/logo.png" alt="loading" class="app3d-loading-logo-img" />
+            </div>
         </div>
-        <img id="img-loader-logo" class="hidden" src="system/images/logo.png" />
+        <!-- <img id="img-loader-logo" class="hidden" src="system/images/logo.png" /> -->
         
         <h1 id="titleH1" class="titleH1"></h1>
         <h2 id="titleBay" class="titleBay"></h2>
@@ -53,6 +59,7 @@
                 <h3>Color containers by:</h3>
                 <select id="dropColors"></select>
                 <ul id="tableColors"></ul>
+                <button id="launchColorsWidget" class="launchColorsWidget">Customize colors</button>
             </div>
             <div class="instructions">
             Press [ESC] to return to the initial view.
@@ -70,11 +77,25 @@
             <input type="hidden" name="json" id="json" />
             <input type="hidden" name="bay" id="bay" />            
         </form>
+
+        <script>
+            var userSettings = { 
+                colors: {
+                    w: {
+                        1: "#dd0000",
+                        0: "#56723a"
+                    }
+                }
+            };
+
+        </script>
         
 		<!--[if IE]>
     	<script src="system/lib/js/polyfills/browser-polyfill.min.js"></script>
 		<script src="system/lib/js/polyfills/es6-promise.js"></script>
 		<![endif]-->
+        <script src="system/lib/js/colorpicker/min/one-color-min.js"></script>
+        <script src="system/lib/js/colorpicker/min/colorjoe-min.js"></script>
         <script src="system/js/build/min/libraries-for-app3d-min.js"></script>
         <script src="system/js/build/app3d.js"></script>
 

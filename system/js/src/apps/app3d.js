@@ -1,12 +1,15 @@
-var scene = require('../core/vessels-3d.js');
-var __s__ = require('../utils/js-helpers.js');
-var __d__ = require('../utils/dom-utilities.js');
-var i18labels = require('../core/i18labels.js');
+var scene = require('../core/vessels-3d.js'),
+    __s__ = require('../utils/js-helpers.js'),
+    __d__ = require('../utils/dom-utilities.js'),
+    colorWidget = require('../colors/colors-widget.js'),
+    i18labels = require('../core/i18labels.js');
 
 var node = document.getElementById("app-3d"),
     titleNode = document.getElementById("titleH1"),
     bayNode = document.getElementById("titleBay"),
     infoNode = document.getElementById("info-window"),
+    dropColors = document.getElementById("dropColors"),
+    launchColorsWidget = document.getElementById("launchColorsWidget"),
 
     queryParams = __s__.getQueryParams(),
     app3d, data,
@@ -34,7 +37,7 @@ controlsControl = {
     hatchDecksVisible: true,
 
     init: function (){
-        let ctrlColors = document.getElementById("dropColors"),
+        let ctrlColors = dropColors,
             ctrlFilter = document.getElementById("dropFilter"),
             j, opt, me = controlsControl,
             filters = app3d.data.filters;
@@ -319,7 +322,7 @@ controlsControl = {
 
         if (!me.isExpanded) {
             me.dropBays.removeAttribute("disabled");
-            me.dropAddHouse.removeAttribute("disabled");
+            if (!me.baySelected) { me.dropAddHouse.removeAttribute("disabled"); }
         }
 
     },
@@ -916,7 +919,43 @@ controlsControl = {
                 g3Bay.hatchC.visible = s;
             }
         }
-    }
+    },
+
+    disableRenderOnColorWidget(isShown) {
+        app3d.toggleRendering(!isShown);
+        app3d.renderer3d.controls.enabled = !isShown;
+    },
+
+    updateSceneAfterCustomColors(filters, changes, filtersCustomized) {
+
+        function hexToRgb(hex) {
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        let key, arr, color, fltr, material;
+        
+        app3d.data.filters = filters;
+
+        for (key in changes) {
+            arr = key.split(".");
+            if (arr.length !== 2) { continue; }
+
+            fltr = filters[arr[0]].obs[arr[1]]; 
+
+            material = app3d.renderer3d.allMaterials[fltr.materialPos];
+            color = hexToRgb(fltr.color);
+
+            material.color.setRGB(color.r/255, color.g/255, color.b/255);
+            material.needsUpdate = true;
+        }
+
+        controlsControl.showColorsTable(dropColors.value);        
+    } 
 
     
 }; //controlsControl 
@@ -930,7 +969,7 @@ app3d = new scene.VesselsApp3D(node, titleNode, infoNode, bayNode);
 app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA)
     .then(
         function(loadedData) {
-            let renderer3d = app3d.renderer3d,
+            let renderer3d = app3d.renderer3d, clrs,
                 modelsFactory = app3d.modelsFactory,
                 maxDepth, maxDepthHalf;
 
@@ -949,6 +988,15 @@ app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA)
             }
             //Pass 2.
             modelsFactory.extendSpecs(app3d.data.filters);
+
+            //Initialize the colorsWidget
+            clrs = new colorWidget.ColorsWidget(launchColorsWidget, app3d.data.filters, dropColors);
+            clrs.onToggled = controlsControl.disableRenderOnColorWidget;
+            clrs.onSaved = controlsControl.updateSceneAfterCustomColors;
+            if (window.userSettings) { clrs.mergeColorSettings(window.userSettings); }
+
+            //Pass 3.
+            modelsFactory.createBaseMaterials(app3d.data.filters);
             renderer3d.createBaseModels(modelsFactory.isoModels);
             renderer3d.create3dContainersFromData(app3d.data);
             if (app3d.data.data.conts[0]) { renderer3d.putInfoWindow(app3d.data.data.conts[0]); }

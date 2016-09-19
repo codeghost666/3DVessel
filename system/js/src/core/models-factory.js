@@ -23,7 +23,7 @@ export class ModelsFactory {
 
     extendSpecs (filters) {
         var j, lenJ, key, val, attr, spec,
-            me = this, material, materialPos,
+            me = this,
             rcolor = new RColor.RColor(), color, hexColor,
             renderer3d = this.appScene.renderer3d;
             
@@ -35,10 +35,29 @@ export class ModelsFactory {
 
                 color = rcolor.get(true);
                 hexColor = parseInt(color.replace(/^#/, ''), 16);
-                materialPos = renderer3d.addContainerMaterial(hexColor);
                                     
                 spec.color = color;
                 spec.hexColor = hexColor;
+                spec.colorIsRandom = true;
+            } 
+        }
+    }
+
+    createBaseMaterials(filters) {
+        var j, lenJ, key, val, attr, spec,
+            me = this, material, materialPos,
+            hexColor,
+            renderer3d = this.appScene.renderer3d;
+            
+        for(key in filters) {
+            attr = filters[key];
+            for(val in attr.obs) {
+
+                spec = attr.obs[val];
+
+                hexColor = spec.hexColor;
+                materialPos = renderer3d.addContainerMaterial(hexColor);
+                                    
                 spec.materialPos = materialPos;
             } 
         }

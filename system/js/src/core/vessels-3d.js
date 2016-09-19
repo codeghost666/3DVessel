@@ -35,31 +35,38 @@ export class VesselsApp3D {
         this._bayNode = bayNode; 
         this._infoNode = infoNode; 
         this._node = (function createDomElements() {
-            let divMainC, divRenderC, divLloadingC, divLoadingText;
+            let divMainC, divRenderC, divLloadingC, divLoadingText,
+                baseId = "app3d-container-" + Math.round(Math.random() * 100000);
             
             //Main DOM element
             divMainC = document.createElement("div");
             divMainC.className = "app3d-container";
-            divMainC.id = "app3d-container-" + Math.round(Math.random() * 100000);
+            divMainC.id = baseId;
             
             //Renderer container
             divRenderC = document.createElement("div");
             divRenderC.className = "app3d-render-container";
-            divRenderC.id = divMainC.id + "-render";
+            divRenderC.id = baseId + "-render";
             divMainC.appendChild(divRenderC);
             divMainC.divRenderC = divRenderC;
             
             //Loading div
-            divLloadingC = document.createElement("div");
-            divLloadingC.className = "app3d-loading-div";
-            divLloadingC.id = divMainC.id + "-loading-div";
-            divMainC.appendChild(divLloadingC);
+            divLloadingC = document.getElementById("app-3d-loading-div");
+            if (!divLloadingC) {
+                divLloadingC = document.createElement("div");
+                divLloadingC.className = "app3d-loading-div";
+                divLloadingC.id = baseId + "-loading-div";
+                divMainC.appendChild(divLloadingC);
+            }
             
             //Loading text inside loading div
-            divLoadingText = document.createElement("div");
-            divLoadingText.className = "app3d-loading-div-text";
-            divLoadingText.id = divMainC.id + "-loading-text";
-            divLloadingC.appendChild(divLoadingText);
+            divLoadingText = document.getElementById("app-3d-loading-div-text");
+            if (!divLoadingText) {
+                divLoadingText = document.createElement("div");
+                divLoadingText.className = "app3d-loading-div-text";
+                divLoadingText.id = baseId + "-loading-text";
+                divLloadingC.appendChild(divLoadingText);
+            }
             
             //initialize loader functions
             divMainC.loadingDiv = new Preloader(divLloadingC, divLoadingText, 100, me.options, "img-loader-logo");
@@ -173,6 +180,11 @@ export class VesselsApp3D {
 
     resumeRendering() {
         if (this.renderer3d) { this.renderer3d._isRendering = true; }
+    }
+
+    toggleRendering(doRender = true) {
+        if (!this.renderer3d) { return; }
+        this.renderer3d._isRendering = !!doRender;
     }
 
     

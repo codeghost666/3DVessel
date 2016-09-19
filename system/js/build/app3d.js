@@ -1,15 +1,18 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
-var scene = require('../core/vessels-3d.js');
-var __s__ = require('../utils/js-helpers.js');
-var __d__ = require('../utils/dom-utilities.js');
-var i18labels = require('../core/i18labels.js');
+var scene = require('../core/vessels-3d.js'),
+    __s__ = require('../utils/js-helpers.js'),
+    __d__ = require('../utils/dom-utilities.js'),
+    colorWidget = require('../colors/colors-widget.js'),
+    i18labels = require('../core/i18labels.js');
 
 var node = document.getElementById("app-3d"),
     titleNode = document.getElementById("titleH1"),
     bayNode = document.getElementById("titleBay"),
     infoNode = document.getElementById("info-window"),
+    dropColors = document.getElementById("dropColors"),
+    launchColorsWidget = document.getElementById("launchColorsWidget"),
     queryParams = __s__.getQueryParams(),
     app3d,
     data,
@@ -37,7 +40,7 @@ controlsControl = {
     hatchDecksVisible: true,
 
     init: function init() {
-        var ctrlColors = document.getElementById("dropColors"),
+        var ctrlColors = dropColors,
             ctrlFilter = document.getElementById("dropFilter"),
             j = undefined,
             opt = undefined,
@@ -351,7 +354,9 @@ controlsControl = {
 
         if (!me.isExpanded) {
             me.dropBays.removeAttribute("disabled");
-            me.dropAddHouse.removeAttribute("disabled");
+            if (!me.baySelected) {
+                me.dropAddHouse.removeAttribute("disabled");
+            }
         }
     },
 
@@ -1028,6 +1033,48 @@ controlsControl = {
                 g3Bay.hatchC.visible = s;
             }
         }
+    },
+
+    disableRenderOnColorWidget: function disableRenderOnColorWidget(isShown) {
+        app3d.toggleRendering(!isShown);
+        app3d.renderer3d.controls.enabled = !isShown;
+    },
+
+    updateSceneAfterCustomColors: function updateSceneAfterCustomColors(filters, changes, filtersCustomized) {
+
+        function hexToRgb(hex) {
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        var key = undefined,
+            arr = undefined,
+            color = undefined,
+            fltr = undefined,
+            material = undefined;
+
+        app3d.data.filters = filters;
+
+        for (key in changes) {
+            arr = key.split(".");
+            if (arr.length !== 2) {
+                continue;
+            }
+
+            fltr = filters[arr[0]].obs[arr[1]];
+
+            material = app3d.renderer3d.allMaterials[fltr.materialPos];
+            color = hexToRgb(fltr.color);
+
+            material.color.setRGB(color.r / 255, color.g / 255, color.b / 255);
+            material.needsUpdate = true;
+        }
+
+        controlsControl.showColorsTable(dropColors.value);
     }
 
 }; //controlsControl
@@ -1039,6 +1086,7 @@ app3d = new scene.VesselsApp3D(node, titleNode, infoNode, bayNode);
 //LoadUrl
 app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA).then(function (loadedData) {
     var renderer3d = app3d.renderer3d,
+        clrs = undefined,
         modelsFactory = app3d.modelsFactory,
         maxDepth = undefined,
         maxDepthHalf = undefined;
@@ -1058,6 +1106,17 @@ app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA).then(function (loadedDat
     }
     //Pass 2.
     modelsFactory.extendSpecs(app3d.data.filters);
+
+    //Initialize the colorsWidget
+    clrs = new colorWidget.ColorsWidget(launchColorsWidget, app3d.data.filters, dropColors);
+    clrs.onToggled = controlsControl.disableRenderOnColorWidget;
+    clrs.onSaved = controlsControl.updateSceneAfterCustomColors;
+    if (window.userSettings) {
+        clrs.mergeColorSettings(window.userSettings);
+    }
+
+    //Pass 3.
+    modelsFactory.createBaseMaterials(app3d.data.filters);
     renderer3d.createBaseModels(modelsFactory.isoModels);
     renderer3d.create3dContainersFromData(app3d.data);
     if (app3d.data.data.conts[0]) {
@@ -1088,7 +1147,301 @@ app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA).then(function (loadedDat
   app3d._node.loadingDiv.updateLoader(0.0, 1.0);
 })*/window.appVessels3D = app3d;
 
-},{"../core/i18labels.js":3,"../core/vessels-3d.js":6,"../utils/dom-utilities.js":10,"../utils/js-helpers.js":11}],2:[function(require,module,exports){
+},{"../colors/colors-widget.js":2,"../core/i18labels.js":4,"../core/vessels-3d.js":7,"../utils/dom-utilities.js":11,"../utils/js-helpers.js":12}],2:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+    value: true
+});
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+var __s__ = require('../utils/js-helpers.js'),
+    __d__ = require('../utils/dom-utilities.js'),
+    i18labels = require('../core/i18labels.js');
+
+//Class ColorsWidget
+
+var ColorsWidget = (function () {
+    function ColorsWidget(btn, filters) {
+        var referenz = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+
+        _classCallCheck(this, ColorsWidget);
+
+        this.isOpened = false;
+        this.btn = btn;
+        this.referenz = referenz;
+        this.filters = filters || {};
+
+        this._currentOption = null;
+
+        this._node = (function () {
+            var divMainC = undefined,
+                dropdwn = undefined,
+                ulColors = undefined,
+                btnSave = undefined,
+                btnCancel = undefined,
+                colorPickerDiv = undefined,
+                colorPickerJoe = undefined,
+                key = undefined,
+                filter = undefined,
+                arrLis = [],
+                divHolder = undefined,
+                baseId = "colors-container-" + Math.round(Math.random() * 100000);
+
+            //Main DOM element
+            divMainC = document.createElement("div");
+            divMainC.className = "colors-container";
+            divMainC.innerHTML = "<h2>" + i18labels.CLICK_TO_CHANGE_COLORS + "</h2>";
+            divMainC.id = baseId;
+
+            divHolder = document.createElement("div");
+            divHolder.className = "colors-container-top";
+
+            dropdwn = document.createElement("SELECT");
+            dropdwn.id = baseId + "-dropdwn";
+            divHolder.appendChild(dropdwn);
+
+            //Populate dropdown
+            for (key in filters) {
+                filter = filters[key];
+                arrLis.push("<option value='" + key + "'>" + filter.name + "</option>");
+            }
+            dropdwn.innerHTML = arrLis.join("");
+
+            btnSave = document.createElement("button");
+            btnSave.innerHTML = "SAVE";
+            divHolder.appendChild(btnSave);
+
+            btnCancel = document.createElement("button");
+            btnCancel.innerHTML = "CANCEL";
+            divHolder.appendChild(btnCancel);
+
+            divMainC.appendChild(divHolder);
+
+            ulColors = document.createElement("ul");
+            ulColors.className = "colors-container-ulColors";
+            ulColors.id = baseId + "-ulColors";
+            divMainC.appendChild(ulColors);
+
+            colorPickerDiv = document.createElement("div");
+            colorPickerDiv.className = "colors-container-colorPicker";
+            colorPickerDiv.id = baseId + "-colorPicker";
+            divMainC.appendChild(colorPickerDiv);
+
+            //Refs
+            divMainC.dropdwn = dropdwn;
+            divMainC.ulColors = ulColors;
+            divMainC.colorPickerDiv = colorPickerDiv;
+            divMainC.btnSave = btnSave;
+            divMainC.btnCancel = btnCancel;
+            divMainC.colorsTemp = {};
+
+            document.body.appendChild(divMainC);
+            return divMainC;
+        })();
+
+        //Optional callbacks
+        this.onToggled = null;
+        this.onSaved = null;
+
+        this._jsonColors = {};
+
+        __d__.addEventLnr(btn, "click", this.toggleHandler.bind(this));
+        __d__.addEventLnr(this._node.dropdwn, "change", this.dropFilterChanged.bind(this));
+        __d__.addEventLnr(this._node.btnCancel, "click", this.close.bind(this));
+        __d__.addEventLnr(this._node.btnSave, "click", this.saveColors.bind(this));
+        __d__.addEventLnr(this._node.ulColors, "click", this.selectOption.bind(this));
+    }
+
+    //Updates filters with json.colors
+
+    _createClass(ColorsWidget, [{
+        key: 'mergeColorSettings',
+        value: function mergeColorSettings(json) {
+            var jsonObj = json,
+                key = undefined,
+                color = undefined,
+                key2 = undefined,
+                filters = this.filters;
+
+            if (typeof json === "String") {
+                jsonObj = JSON.parse(json);
+            }
+            if (!jsonObj.colors) {
+                console.error(i18labels.NO_COLOR_SETTINGS);return;
+            }
+
+            for (key in jsonObj.colors) {
+                if (!filters[key]) {
+                    continue;
+                }
+
+                for (key2 in jsonObj.colors[key]) {
+                    if (!filters[key].obs.hasOwnProperty(key2)) {
+                        continue;
+                    }
+
+                    color = jsonObj.colors[key][key2];
+                    filters[key].obs[key2].color = color;
+                    filters[key].obs[key2].hexColor = parseInt(color.replace(/^#/, ''), 16);
+                    filters[key].obs[key2].colorIsRandom = false;
+                }
+            }
+
+            this._jsonColors = jsonObj.colors;
+        }
+    }, {
+        key: 'toggleHandler',
+        value: function toggleHandler(ev) {
+            this.toggle(!this.isOpened);
+        }
+    }, {
+        key: 'close',
+        value: function close() {
+            this.toggle(false);
+        }
+    }, {
+        key: 'toggle',
+        value: function toggle() {
+            var doOpen = arguments.length <= 0 || arguments[0] === undefined ? true : arguments[0];
+
+            var filters = this.filters;
+            this._node.style.display = doOpen ? "block" : "none";
+            this.isOpened = doOpen;
+
+            if (!doOpen) {
+                if (this.onToggled) {
+                    this.onToggled(false);
+                }return;
+            }
+
+            //Following code when the widget is opened
+            this._node.colorsTemp = {};
+
+            if (this.referenz && this.referenz.value !== "" && filters[this.referenz.value]) {
+                this._node.dropdwn.value = this.referenz.value;
+            }
+
+            //Populate color options
+            this.dropFilterChanged();
+
+            //If callback
+            if (this.onToggled) {
+                this.onToggled(true);
+            }
+        }
+    }, {
+        key: 'dropFilterChanged',
+        value: function dropFilterChanged() {
+            var me = this,
+                arr = [],
+                key = undefined,
+                tfLabels = { "0": "no", "1": "yes" },
+                filterKey = this._node.dropdwn.value,
+                currFilter = this.filters[filterKey],
+                lis = undefined,
+                firstLi = undefined,
+                currColor = undefined;
+
+            for (key in currFilter.obs) {
+                currColor = me._node.colorsTemp[filterKey + "." + key] || currFilter.obs[key].color;
+                arr.push("<li data-color='" + currColor + "' id='liColor_" + filterKey + "." + key + "'><span style='background:" + currColor + "'> </span>" + (currFilter.tf ? tfLabels[key] : key) + "&nbsp;</li>");
+            }
+
+            this._node.ulColors.innerHTML = arr.join("");
+            lis = this._node.ulColors.getElementsByTagName("LI");
+            if (!lis || lis.length === 0) {
+                return;
+            }
+
+            firstLi = lis[0];
+            firstLi.className = "selected";
+            this._currentOption = firstLi;
+
+            //Initialize colorPicker
+            if (!this._node.colorPickerJoe) {
+                this._node.colorPickerJoe = colorjoe.rgb(this._node.colorPickerDiv, firstLi.getAttribute("data-color"));
+                this._node.colorPickerJoe.on("change", function (color) {
+                    me._currentOption.setAttribute("data-color", color.hex());
+                    me._currentOption.getElementsByTagName("SPAN")[0].style.background = color.hex();
+                    me._node.colorsTemp[me._currentOption.id.replace("liColor_", "")] = color.hex();
+                });
+            } else {
+                this._node.colorPickerJoe.set(firstLi.getAttribute("data-color"));
+            }
+        }
+    }, {
+        key: 'selectOption',
+        value: function selectOption(ev) {
+            var me = this,
+                li = ev.target,
+                lis = undefined,
+                j = undefined,
+                lenJ = undefined;
+
+            if (li.tagName !== "LI") {
+                return;
+            }
+            lis = this._node.ulColors.getElementsByTagName("LI");
+            if (li.className === "selected") {
+                return;
+            }
+
+            for (j = 0, lenJ = lis.length; j < lenJ; j += 1) {
+                if (li !== lis[j]) {
+                    lis[j].className = "";
+                }
+            }
+
+            setTimeout(function () {
+                li.className = "selected";
+                me._node.colorPickerJoe.set(li.getAttribute("data-color"), true);
+                me._currentOption = li;
+            }, 150);
+        }
+    }, {
+        key: 'saveColors',
+        value: function saveColors() {
+            var key = undefined,
+                colorsTemp = this._node.colorsTemp,
+                filters = this.filters,
+                filtersCustomized = {},
+                arr = undefined,
+                color = undefined;
+
+            for (key in colorsTemp) {
+                arr = key.split(".");
+                if (arr.length !== 2) {
+                    continue;
+                }
+
+                color = colorsTemp[key];
+                filters[arr[0]].obs[arr[1]].color = color;
+                filters[arr[0]].obs[arr[1]].hexColor = parseInt(color.replace(/^#/, ''), 16);
+                filters[arr[0]].obs[arr[1]].colorIsRandom = false;
+
+                if (!filtersCustomized[arr[0]]) {
+                    filtersCustomized[arr[0]] = true;
+                }
+            }
+
+            this.close();
+
+            if (this.onSaved) {
+                this.onSaved(filters, colorsTemp, filtersCustomized);
+            }
+        }
+    }]);
+
+    return ColorsWidget;
+})();
+
+exports.ColorsWidget = ColorsWidget;
+
+},{"../core/i18labels.js":4,"../utils/dom-utilities.js":11,"../utils/js-helpers.js":12}],3:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -1372,7 +1725,7 @@ var DataLoader = (function () {
 
 exports.DataLoader = DataLoader;
 
-},{"../utils/dom-utilities.js":10,"../utils/js-helpers.js":11,"./i18labels.js":3}],3:[function(require,module,exports){
+},{"../utils/dom-utilities.js":11,"../utils/js-helpers.js":12,"./i18labels.js":4}],4:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1384,9 +1737,14 @@ exports.LOADING_DATA = LOADING_DATA;
 var INVALID_DATA_SOURCE = "Error: Missing data source.";
 exports.INVALID_DATA_SOURCE = INVALID_DATA_SOURCE;
 var ERROR_PARSING_JSON = "Error while parsing the JSON file.";
-exports.ERROR_PARSING_JSON = ERROR_PARSING_JSON;
 
-},{}],4:[function(require,module,exports){
+exports.ERROR_PARSING_JSON = ERROR_PARSING_JSON;
+var CLICK_TO_CHANGE_COLORS = "Click on colors to change them";
+exports.CLICK_TO_CHANGE_COLORS = CLICK_TO_CHANGE_COLORS;
+var NO_COLOR_SETTINGS = "No color settings found. Will use random.";
+exports.NO_COLOR_SETTINGS = NO_COLOR_SETTINGS;
+
+},{}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -1432,8 +1790,6 @@ var ModelsFactory = (function () {
                 attr,
                 spec,
                 me = this,
-                material,
-                materialPos,
                 rcolor = new RColor.RColor(),
                 color,
                 hexColor,
@@ -1447,10 +1803,37 @@ var ModelsFactory = (function () {
 
                     color = rcolor.get(true);
                     hexColor = parseInt(color.replace(/^#/, ''), 16);
-                    materialPos = renderer3d.addContainerMaterial(hexColor);
 
                     spec.color = color;
                     spec.hexColor = hexColor;
+                    spec.colorIsRandom = true;
+                }
+            }
+        }
+    }, {
+        key: 'createBaseMaterials',
+        value: function createBaseMaterials(filters) {
+            var j,
+                lenJ,
+                key,
+                val,
+                attr,
+                spec,
+                me = this,
+                material,
+                materialPos,
+                hexColor,
+                renderer3d = this.appScene.renderer3d;
+
+            for (key in filters) {
+                attr = filters[key];
+                for (val in attr.obs) {
+
+                    spec = attr.obs[val];
+
+                    hexColor = spec.hexColor;
+                    materialPos = renderer3d.addContainerMaterial(hexColor);
+
                     spec.materialPos = materialPos;
                 }
             }
@@ -1462,7 +1845,7 @@ var ModelsFactory = (function () {
 
 exports.ModelsFactory = ModelsFactory;
 
-},{"../utils/random-color.js":13}],5:[function(require,module,exports){
+},{"../utils/random-color.js":14}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -2435,7 +2818,7 @@ var Renderer3D = (function () {
 
 exports.Renderer3D = Renderer3D;
 
-},{"../text2D/SpriteText2D.js":8,"../text2D/textAlign.js":9,"../utils/dom-utilities.js":10,"../utils/js-helpers.js":11}],6:[function(require,module,exports){
+},{"../text2D/SpriteText2D.js":9,"../text2D/textAlign.js":10,"../utils/dom-utilities.js":11,"../utils/js-helpers.js":12}],7:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -2486,31 +2869,38 @@ var VesselsApp3D = (function () {
             var divMainC = undefined,
                 divRenderC = undefined,
                 divLloadingC = undefined,
-                divLoadingText = undefined;
+                divLoadingText = undefined,
+                baseId = "app3d-container-" + Math.round(Math.random() * 100000);
 
             //Main DOM element
             divMainC = document.createElement("div");
             divMainC.className = "app3d-container";
-            divMainC.id = "app3d-container-" + Math.round(Math.random() * 100000);
+            divMainC.id = baseId;
 
             //Renderer container
             divRenderC = document.createElement("div");
             divRenderC.className = "app3d-render-container";
-            divRenderC.id = divMainC.id + "-render";
+            divRenderC.id = baseId + "-render";
             divMainC.appendChild(divRenderC);
             divMainC.divRenderC = divRenderC;
 
             //Loading div
-            divLloadingC = document.createElement("div");
-            divLloadingC.className = "app3d-loading-div";
-            divLloadingC.id = divMainC.id + "-loading-div";
-            divMainC.appendChild(divLloadingC);
+            divLloadingC = document.getElementById("app-3d-loading-div");
+            if (!divLloadingC) {
+                divLloadingC = document.createElement("div");
+                divLloadingC.className = "app3d-loading-div";
+                divLloadingC.id = baseId + "-loading-div";
+                divMainC.appendChild(divLloadingC);
+            }
 
             //Loading text inside loading div
-            divLoadingText = document.createElement("div");
-            divLoadingText.className = "app3d-loading-div-text";
-            divLoadingText.id = divMainC.id + "-loading-text";
-            divLloadingC.appendChild(divLoadingText);
+            divLoadingText = document.getElementById("app-3d-loading-div-text");
+            if (!divLoadingText) {
+                divLoadingText = document.createElement("div");
+                divLoadingText.className = "app3d-loading-div-text";
+                divLoadingText.id = baseId + "-loading-text";
+                divLloadingC.appendChild(divLoadingText);
+            }
 
             //initialize loader functions
             divMainC.loadingDiv = new Preloader(divLloadingC, divLoadingText, 100, me.options, "img-loader-logo");
@@ -2650,6 +3040,16 @@ var VesselsApp3D = (function () {
                 this.renderer3d._isRendering = true;
             }
         }
+    }, {
+        key: 'toggleRendering',
+        value: function toggleRendering() {
+            var doRender = arguments.length <= 0 || arguments[0] === undefined ? true : arguments[0];
+
+            if (!this.renderer3d) {
+                return;
+            }
+            this.renderer3d._isRendering = !!doRender;
+        }
 
         //Generate screenshots
         //Returns an image/data format
@@ -2672,7 +3072,7 @@ var VesselsApp3D = (function () {
 
 exports.VesselsApp3D = VesselsApp3D;
 
-},{"../utils/dom-utilities.js":10,"../utils/js-helpers.js":11,"../utils/preloader.js":12,"./data-loader.js":2,"./i18labels.js":3,"./models-factory.js":4,"./renderer.js":5}],7:[function(require,module,exports){
+},{"../utils/dom-utilities.js":11,"../utils/js-helpers.js":12,"../utils/preloader.js":13,"./data-loader.js":3,"./i18labels.js":4,"./models-factory.js":5,"./renderer.js":6}],8:[function(require,module,exports){
 'use strict';
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
@@ -2755,7 +3155,7 @@ function getFontHeight(fontStyle) {
 
 module.exports = CanvasText;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict';
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
@@ -2890,7 +3290,7 @@ var SpriteText2D = (function (_THREE$Object3D) {
 
 module.exports = SpriteText2D;
 
-},{"./CanvasText.js":7,"./textAlign.js":9}],9:[function(require,module,exports){
+},{"./CanvasText.js":8,"./textAlign.js":10}],10:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -2903,7 +3303,7 @@ module.exports = {
   bottomRight: new THREE.Vector2(-1, 1)
 };
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2943,7 +3343,7 @@ var addEventDsptchr = function addEventDsptchr(eName) {
 };
 exports.addEventDsptchr = addEventDsptchr;
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -3054,7 +3454,7 @@ function callOnCondition(condition, ifTrueCall, ifFalseCall) {
 
 ;
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3234,7 +3634,7 @@ var _default = (function () {
 exports["default"] = _default;
 module.exports = exports["default"];
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
