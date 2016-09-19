@@ -73,6 +73,7 @@ export class ColorsWidget {
         //Optional callbacks
         this.onToggled = null;
         this.onSaved = null;
+        this.postUrl = null;
 
         this._jsonColors = {};
 
@@ -199,7 +200,9 @@ export class ColorsWidget {
         let key, 
             colorsTemp = this._node.colorsTemp,
             filters = this.filters, filtersCustomized = {},
-            arr, color;
+            dataToPost = [],
+            arr, color,
+            req;
 
         for (key in colorsTemp) {
             arr = key.split(".");
@@ -211,13 +214,28 @@ export class ColorsWidget {
             filters[arr[0]].obs[arr[1]].colorIsRandom = false;
 
             if (!filtersCustomized[arr[0]]) { filtersCustomized[arr[0]] = true; }
+
+            dataToPost.push({attributeKey: arr[0], attributeValue: arr[1], hexColor: color });
         }
 
         this.close();
 
         if (this.onSaved) {
             this.onSaved(filters, colorsTemp, filtersCustomized);
-        }        
+        }
+
+        if (!this.postUrl) { return; }
+
+        req = new XMLHttpRequest();
+        req.open('POST', this.postUrl);
+        req.setRequestHeader('Content-Type', 'application/json');
+        req.onreadystatechange = function () {
+            if (req.readyState === 4 && req.status === 200) {
+                console.log(req.responseText);
+            }
+        }
+        req.send(JSON.stringify(dataToPost));
+
     }
 
 }

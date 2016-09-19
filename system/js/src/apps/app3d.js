@@ -993,6 +993,7 @@ app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA)
             clrs = new colorWidget.ColorsWidget(launchColorsWidget, app3d.data.filters, dropColors);
             clrs.onToggled = controlsControl.disableRenderOnColorWidget;
             clrs.onSaved = controlsControl.updateSceneAfterCustomColors;
+            clrs.postUrl = window.writeColorsRoute;
             if (window.userSettings) { clrs.mergeColorSettings(window.userSettings); }
 
             //Pass 3.
