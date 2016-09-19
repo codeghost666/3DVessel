@@ -1265,30 +1265,28 @@ var ColorsWidget = (function () {
                 key = undefined,
                 color = undefined,
                 key2 = undefined,
-                filters = this.filters;
+                filters = this.filters,
+                arr = undefined,
+                compoundKey = undefined;
 
             if (typeof json === "String") {
                 jsonObj = JSON.parse(json);
             }
             if (!jsonObj.colors) {
-                console.error(i18labels.NO_COLOR_SETTINGS);return;
+                console.warn(i18labels.NO_COLOR_SETTINGS);return;
             }
 
             for (key in jsonObj.colors) {
-                if (!filters[key]) {
+                arr = key.split(".");
+
+                if (!filters[arr[0]] || !filters[arr[0]].obs.hasOwnProperty(arr[1])) {
                     continue;
                 }
 
-                for (key2 in jsonObj.colors[key]) {
-                    if (!filters[key].obs.hasOwnProperty(key2)) {
-                        continue;
-                    }
-
-                    color = jsonObj.colors[key][key2];
-                    filters[key].obs[key2].color = color;
-                    filters[key].obs[key2].hexColor = parseInt(color.replace(/^#/, ''), 16);
-                    filters[key].obs[key2].colorIsRandom = false;
-                }
+                color = jsonObj.colors[key];
+                filters[arr[0]].obs[arr[1]].color = color;
+                filters[arr[0]].obs[arr[1]].hexColor = parseInt(color.replace(/^#/, ''), 16);
+                filters[arr[0]].obs[arr[1]].colorIsRandom = false;
             }
 
             this._jsonColors = jsonObj.colors;

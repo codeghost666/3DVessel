@@ -86,22 +86,21 @@ export class ColorsWidget {
     //Updates filters with json.colors
     mergeColorSettings(json) {
         let jsonObj = json, key, color, key2, 
-            filters = this.filters;
+            filters = this.filters, arr, compoundKey;
 
         if (typeof(json) === "String") { jsonObj = JSON.parse(json); }
-        if (!jsonObj.colors) { console.error(i18labels.NO_COLOR_SETTINGS); return; }
+        if (!jsonObj.colors) { console.warn(i18labels.NO_COLOR_SETTINGS); return; }
 
-        for (key in jsonObj.colors) {            
-            if (!filters[key]) { continue; }
+        for (key in jsonObj.colors) {
+            arr = key.split(".");
 
-            for (key2 in jsonObj.colors[key]) {
-                if (!filters[key].obs.hasOwnProperty(key2)) { continue; }
+            if (!filters[arr[0]] || !filters[arr[0]].obs.hasOwnProperty(arr[1])) { continue; }
 
-                color = jsonObj.colors[key][key2];
-                filters[key].obs[key2].color = color;
-                filters[key].obs[key2].hexColor = parseInt(color.replace(/^#/, ''), 16);
-                filters[key].obs[key2].colorIsRandom = false;
-            }
+            color = jsonObj.colors[key];
+            filters[arr[0]].obs[arr[1]].color = color;
+            filters[arr[0]].obs[arr[1]].hexColor = parseInt(color.replace(/^#/, ''), 16);
+            filters[arr[0]].obs[arr[1]].colorIsRandom = false;
+            
         }
 
         this._jsonColors = jsonObj.colors;
