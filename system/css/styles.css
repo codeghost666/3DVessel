@@ -426,6 +426,61 @@ canvas {
     margin-left: 5%;
     margin-top: 10px; }
 
+.printopts-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 500px;
+  height: 260px;
+  margin: -130px 0 0 -250px;
+  box-sizing: border-box;
+  padding: 15px;
+  box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.3);
+  background: #ffffff;
+  border: 6px solid #cccccc;
+  display: none; }
+  .printopts-container h2 {
+    font-size: 15px;
+    margin: 0 0 10px 0; }
+  .printopts-container .printopts-form {
+    float: left;
+    width: 100%;
+    display: block;
+    height: 260px; }
+  .printopts-container .printopts-progress {
+    float: left;
+    width: 100%;
+    display: none;
+    font-size: 13px;
+    text-align: center;
+    padding-top: 90px;
+    height: 260px; }
+  .printopts-container .printopts-container-top {
+    float: left;
+    width: 100%;
+    margin-bottom: 10px; }
+  .printopts-container select {
+    float: left;
+    clear: left;
+    margin-bottom: 5px; }
+  .printopts-container span {
+    color: #666;
+    font-size: 13px; }
+  .printopts-container button {
+    font-size: 13px;
+    border-radius: 5px;
+    background: #eee;
+    padding: 3px 15px;
+    border: 1px solid #aaa; }
+    .printopts-container button:hover {
+      background: #ddd; }
+    .printopts-container button.save {
+      background: #0a0;
+      color: white;
+      border: 1px solid #0a0; }
+      .printopts-container button.save:hover {
+        background: #009100; }
+
 @media print {
   .bay-panel,
   html, body {

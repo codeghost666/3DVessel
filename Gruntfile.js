@@ -9,7 +9,9 @@ module.exports = function (grunt) {
                ]
             },
             files: {
-               "./system/js/build/app3d.js": ["./system/js/src/apps/app3d.js"]
+               "./system/js/build/app3d.js": ["./system/js/src/apps/app3d.js"],
+               "./system/js/build/app2d.js": ["./system/js/src/apps/app2d.js"],
+               "./system/js/build/color-widget.js": ["./system/js/src/apps/color-settings.js"]
             }
          }
       },

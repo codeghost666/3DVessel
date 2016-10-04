@@ -5,6 +5,7 @@ var __s__ = require('../utils/js-helpers.js'),
 //Class ColorsWidget
 export class ColorsWidget {
     constructor(btn, filters, referenz = null) {
+        let me = this;
         
         this.isOpened = false;
         this.btn = btn;
@@ -67,6 +68,15 @@ export class ColorsWidget {
             divMainC.colorsTemp = {};
 
             document.body.appendChild(divMainC);
+
+            if (btn) {
+                __d__.addEventLnr(btn, "click", me.toggleHandler.bind(me));
+                __d__.addEventLnr(dropdwn, "change", me.dropFilterChanged.bind(me));
+                __d__.addEventLnr(btnCancel, "click", me.close.bind(me));
+                __d__.addEventLnr(btnSave, "click", me.saveColors.bind(me));
+                __d__.addEventLnr(ulColors, "click", me.selectOption.bind(me));
+            }
+                 
             return divMainC;       
         }());
 
@@ -77,11 +87,6 @@ export class ColorsWidget {
 
         this._jsonColors = {};
 
-        __d__.addEventLnr(btn, "click", this.toggleHandler.bind(this));
-        __d__.addEventLnr(this._node.dropdwn, "change", this.dropFilterChanged.bind(this));
-        __d__.addEventLnr(this._node.btnCancel, "click", this.close.bind(this));
-        __d__.addEventLnr(this._node.btnSave, "click", this.saveColors.bind(this));
-        __d__.addEventLnr(this._node.ulColors, "click", this.selectOption.bind(this));
     }
 
     //Updates filters with json.colors

@@ -995,7 +995,7 @@ app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA)
             clrs.onSaved = controlsControl.updateSceneAfterCustomColors;
             clrs.postUrl = window.writeColorsRoute;
             if (window.userSettings) { clrs.mergeColorSettings(window.userSettings); }
-
+            
             //Pass 3.
             modelsFactory.createBaseMaterials(app3d.data.filters);
             renderer3d.createBaseModels(modelsFactory.isoModels);

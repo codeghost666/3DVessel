@@ -116,7 +116,7 @@ canvas { width: 100%; height: 100%; }
         h3 { font-size: 12px; margin:0; font-style: italic;}
         
     }
-    .info-window {
+    .info-window { 
         margin-top:20px;
         background: $colorInfo; color:#fff;
         border-radius: 5px 0 0 0;
@@ -217,6 +217,31 @@ canvas { width: 100%; height: 100%; }
     .colorPicker,
     .colors-container-colorPicker {
         float:left; width:45%; height: 160px; box-sizing: border-box; margin-left:5%; margin-top:10px;
+    }
+} 
+
+.printopts-container {
+    position:fixed; top:50%; left:50%; width:500px; height: 260px; margin:-130px 0 0 -250px;
+    box-sizing: border-box; padding:15px;
+    box-shadow: 0 0 10px 5px rgba(0,0,0,0.3);
+    background: #ffffff; border:6px solid lighten($colorInfo, 80%); display: none;
+
+    h2 { font-size: 15px; margin:0 0 10px 0;}
+
+    .printopts-form { float:left; width: 100%; display: block; height: 260px; }
+    .printopts-progress { float:left; width: 100%; display: none; 
+        font-size:13px; text-align: center; padding-top: 90px; height: 260px; } 
+
+    .printopts-container-top { float:left; width: 100%; margin-bottom:10px;}
+    
+    select { float:left; clear:left; margin-bottom: 5px; }
+    span { color: #666; font-size: 13px; }
+    button { font-size: 13px; border-radius: 5px; background: #eee; padding:3px 15px; border:1px solid #aaa;
+            &:hover { background: #ddd; }
+
+        &.save { background: #0a0; color:white;  border:1px solid #0a0;
+            &:hover { background: darken(#0a0, 5%); }
+        }
     }
 }
 

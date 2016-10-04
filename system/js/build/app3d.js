@@ -1171,6 +1171,8 @@ var ColorsWidget = (function () {
 
         _classCallCheck(this, ColorsWidget);
 
+        var me = this;
+
         this.isOpened = false;
         this.btn = btn;
         this.referenz = referenz;
@@ -1241,6 +1243,15 @@ var ColorsWidget = (function () {
             divMainC.colorsTemp = {};
 
             document.body.appendChild(divMainC);
+
+            if (btn) {
+                __d__.addEventLnr(btn, "click", me.toggleHandler.bind(me));
+                __d__.addEventLnr(dropdwn, "change", me.dropFilterChanged.bind(me));
+                __d__.addEventLnr(btnCancel, "click", me.close.bind(me));
+                __d__.addEventLnr(btnSave, "click", me.saveColors.bind(me));
+                __d__.addEventLnr(ulColors, "click", me.selectOption.bind(me));
+            }
+
             return divMainC;
         })();
 
@@ -1250,12 +1261,6 @@ var ColorsWidget = (function () {
         this.postUrl = null;
 
         this._jsonColors = {};
-
-        __d__.addEventLnr(btn, "click", this.toggleHandler.bind(this));
-        __d__.addEventLnr(this._node.dropdwn, "change", this.dropFilterChanged.bind(this));
-        __d__.addEventLnr(this._node.btnCancel, "click", this.close.bind(this));
-        __d__.addEventLnr(this._node.btnSave, "click", this.saveColors.bind(this));
-        __d__.addEventLnr(this._node.ulColors, "click", this.selectOption.bind(this));
     }
 
     //Updates filters with json.colors
@@ -1522,17 +1527,17 @@ var DataLoader = (function () {
                     }
                 } //transferComplete
 
-                me.divLoading.show();
-
                 if (!jsonUrl) {
                     reject(i18labels.INVALID_DATA_SOURCE);
                     return;
                 }
 
-                me.divLoading.show();
-                me.divLoading.startAnimation();
-                if (loadingText) {
-                    me.divLoading.setMessage(loadingText);
+                if (me.divLoading) {
+                    me.divLoading.show();
+                    me.divLoading.startAnimation();
+                    if (loadingText) {
+                        me.divLoading.setMessage(loadingText);
+                    }
                 }
 
                 req = new XMLHttpRequest();
@@ -1571,10 +1576,18 @@ var DataLoader = (function () {
                 data = undefined,
                 dataStructured = undefined,
                 filters = undefined,
+                dataStructuredKeysArr = [],
+                key = undefined,
+                keyEven = undefined,
+                keyEvenPrev = undefined,
                 iTierMin = undefined,
                 iTierMinAbove = undefined,
+                iTierMax = undefined,
+                iTierMaxAbove = undefined,
                 maxWidth = 0,
+                lastBay = "",
                 hasZeroCell = false,
+                maxCell = 0,
                 numContsByBay = {},
                 containersIDs = {},
                 allContainerMeshesObj = {};
@@ -1596,6 +1609,7 @@ var DataLoader = (function () {
                     dataStructured[bay2] = { cells: {}, n: 0 };
                     dataStructured.n += 1;
                     dataStructured[bay2].maxD = 20;
+                    dataStructuredKeysArr.push(bay2);
                 }
                 if (!dataStructured[bay2].cells[ob.cell]) {
                     dataStructured[bay2].cells[ob.cell] = { tiers: {}, n: 0 };
@@ -1626,6 +1640,11 @@ var DataLoader = (function () {
                         aboveTiers.tiers[obj.tier] = { h: ob.h, accH: 0 };
                         aboveTiers.n += 1;
                     }
+                }
+                if (!tiers[obj.tier]) {
+                    tiers[obj.tier] = { maxH: obj.h };
+                } else {
+                    tiers[obj.tier].maxH = Math.max(tiers[obj.tier].maxH, obj.h);
                 }
             }
 
@@ -1715,13 +1734,34 @@ var DataLoader = (function () {
                 connectToFilters(obj);
             }
 
-            //Min tiers below & above
+            //Iterate trough bays
+            lastBay = _.max(_.keys(dataStructured));
+            for (j = 1, lenD = Number(lastBay); j <= lenD; j += 2) {
+                key = __s__.pad(j, 3);
+                keyEvenPrev = __s__.pad(j - 1, 3);
+
+                if (!dataStructured[key]) {
+                    continue;
+                }
+
+                dataStructured[key].isBlockStart = true;
+                if (numContsByBay[keyEvenPrev]) {
+                    dataStructured[key].isBlockStart = false;
+                }
+
+                dataStructured[key].maxCell = _.chain(dataStructured[key].cells).keys().sort().last().value();
+            }
+
+            //Min/Max tiers below & above
             iTierMin = Number(_.min(_.keys(belowTiers.tiers)));
             iTierMinAbove = Number(_.min(_.keys(aboveTiers.tiers)));
+            iTierMax = Number(_.max(_.keys(belowTiers.tiers)));
+            iTierMaxAbove = Number(_.max(_.keys(aboveTiers.tiers)));
 
             return {
                 data: data,
                 dataStructured: dataStructured,
+                dataStructuredKeysArr: dataStructuredKeysArr.sort(__s__.sortNumeric),
                 belowTiers: belowTiers,
                 aboveTiers: aboveTiers,
                 containersIDs: containersIDs,
@@ -1730,9 +1770,12 @@ var DataLoader = (function () {
                 filters: filters,
                 iTierMin: iTierMin,
                 iTierMinAbove: iTierMinAbove,
+                iTierMax: iTierMax,
+                iTierMaxAbove: iTierMaxAbove,
+                tiers: tiers,
                 maxWidth: maxWidth,
                 firstBay: _.min(_.keys(dataStructured)),
-                lastBay: _.max(_.keys(dataStructured)),
+                lastBay: lastBay,
                 hasZeroCell: hasZeroCell
             };
         }
@@ -1760,7 +1803,32 @@ exports.ERROR_PARSING_JSON = ERROR_PARSING_JSON;
 var CLICK_TO_CHANGE_COLORS = "Click on colors to change them";
 exports.CLICK_TO_CHANGE_COLORS = CLICK_TO_CHANGE_COLORS;
 var NO_COLOR_SETTINGS = "No color settings found. Will use random.";
+
 exports.NO_COLOR_SETTINGS = NO_COLOR_SETTINGS;
+var PRINTOPTS_TITLE = "Please select the document options";
+exports.PRINTOPTS_TITLE = PRINTOPTS_TITLE;
+var PRINTOPTS_ORIENTATION = "Orientation";
+exports.PRINTOPTS_ORIENTATION = PRINTOPTS_ORIENTATION;
+var PRINTOPTS_ORIENTATION_LANDSCAPE = "Landscape";
+exports.PRINTOPTS_ORIENTATION_LANDSCAPE = PRINTOPTS_ORIENTATION_LANDSCAPE;
+var PRINTOPTS_ORIENTATION_PORTRAIT = "Portrait";
+exports.PRINTOPTS_ORIENTATION_PORTRAIT = PRINTOPTS_ORIENTATION_PORTRAIT;
+var PRINTOPTS_DPI = "Printer DPI";
+exports.PRINTOPTS_DPI = PRINTOPTS_DPI;
+var PRINTOPTS_SIZE = "Paper Size";
+exports.PRINTOPTS_SIZE = PRINTOPTS_SIZE;
+var PRINTOPTS_GO = "GENERATE PDF";
+exports.PRINTOPTS_GO = PRINTOPTS_GO;
+var PRINTOPTS_PERROW = "Bays per row";
+exports.PRINTOPTS_PERROW = PRINTOPTS_PERROW;
+var PRINTOPTS_COLORBY = "Color by";
+exports.PRINTOPTS_COLORBY = PRINTOPTS_COLORBY;
+var PRINTOPTS_PAGEPROGRESS = "Generating pages, please wait...";
+exports.PRINTOPTS_PAGEPROGRESS = PRINTOPTS_PAGEPROGRESS;
+var PRINTOPTS_SENDINGPAGES = "Sending pages, please wait...";
+exports.PRINTOPTS_SENDINGPAGES = PRINTOPTS_SENDINGPAGES;
+var PRINTOPTS_DOWNLOAD = "Download PDF";
+exports.PRINTOPTS_DOWNLOAD = PRINTOPTS_DOWNLOAD;
 
 },{}],5:[function(require,module,exports){
 'use strict';
@@ -1810,8 +1878,7 @@ var ModelsFactory = (function () {
                 me = this,
                 rcolor = new RColor.RColor(),
                 color,
-                hexColor,
-                renderer3d = this.appScene.renderer3d;
+                hexColor;
 
             for (key in filters) {
                 attr = filters[key];
@@ -3368,6 +3435,7 @@ Object.defineProperty(exports, '__esModule', {
     value: true
 });
 exports.callOnCondition = callOnCondition;
+exports.lightenDarkenColor = lightenDarkenColor;
 var isArray = function isArray(c) {
     return Array.isArray ? Array.isArray(c) : c instanceof Array;
 };
@@ -3468,6 +3536,32 @@ function callOnCondition(condition, ifTrueCall, ifFalseCall) {
     } else {
         ifFalseCall.apply(null, arguments);
     }
+}
+
+;
+
+function lightenDarkenColor(col, amt) {
+    var usePound = false;
+    if (col[0] == "#") {
+        col = col.slice(1);
+        usePound = true;
+    }
+
+    var num = parseInt(col, 16);
+
+    var r = (num >> 16) + amt;
+
+    if (r > 255) r = 255;else if (r < 0) r = 0;
+
+    var b = (num >> 8 & 0x00FF) + amt;
+
+    if (b > 255) b = 255;else if (b < 0) b = 0;
+
+    var g = (num & 0x0000FF) + amt;
+
+    if (g > 255) g = 255;else if (g < 0) g = 0;
+
+    return (usePound ? "#" : "") + (g | b << 8 | r << 16).toString(16);
 }
 
 ;

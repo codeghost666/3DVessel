@@ -22,10 +22,10 @@ export class ModelsFactory {
     }
 
     extendSpecs (filters) {
-        var j, lenJ, key, val, attr, spec,
+        var j, lenJ, key, val, 
+            attr, spec,
             me = this,
-            rcolor = new RColor.RColor(), color, hexColor,
-            renderer3d = this.appScene.renderer3d;
+            rcolor = new RColor.RColor(), color, hexColor;
             
         for(key in filters) {
             attr = filters[key];

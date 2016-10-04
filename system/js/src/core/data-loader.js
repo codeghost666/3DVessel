@@ -47,16 +47,16 @@ export class DataLoader {
                     }
                 }//transferComplete
 
-                me.divLoading.show();
-
                 if (!jsonUrl) {
                     reject(i18labels.INVALID_DATA_SOURCE);
                     return;
                 }
 
-                me.divLoading.show();
-                me.divLoading.startAnimation();
-                if (loadingText) { me.divLoading.setMessage(loadingText); }
+                if (me.divLoading) {
+                    me.divLoading.show();
+                    me.divLoading.startAnimation();
+                    if (loadingText) { me.divLoading.setMessage(loadingText); }
+                }
 
                 req = new XMLHttpRequest(); 
 
@@ -82,10 +82,14 @@ export class DataLoader {
             bays = {}, cells = {}, tiers = {}, 
             belowTiers,
             aboveTiers,
-            data, dataStructured, filters,
+            data, dataStructured, filters, dataStructuredKeysArr = [],
+            key, keyEven, keyEvenPrev,
             iTierMin, iTierMinAbove,
+            iTierMax, iTierMaxAbove,
             maxWidth = 0,
+            lastBay = "",
             hasZeroCell = false,
+            maxCell = 0,
             numContsByBay = {},
             containersIDs = {}, allContainerMeshesObj = {};
             
@@ -103,6 +107,7 @@ export class DataLoader {
                 dataStructured[bay2] = { cells: {}, n: 0};
                 dataStructured.n += 1;
                 dataStructured[bay2].maxD = 20;
+                dataStructuredKeysArr.push(bay2);
             }
             if (!dataStructured[bay2].cells[ob.cell]) {
                 dataStructured[bay2].cells[ob.cell] = { tiers: {}, n: 0};
@@ -125,6 +130,11 @@ export class DataLoader {
                     aboveTiers.tiers[obj.tier] = { h: ob.h, accH: 0 };
                     aboveTiers.n += 1;
                 }
+            }
+            if(!tiers[obj.tier]) {
+                tiers[obj.tier] = { maxH: obj.h };
+            } else {
+                tiers[obj.tier].maxH = Math.max(tiers[obj.tier].maxH, obj.h);
             }
         }
         
@@ -196,13 +206,30 @@ export class DataLoader {
             connectToFilters(obj);
         }
 
-        //Min tiers below & above
+        //Iterate trough bays
+        lastBay = _.max(_.keys(dataStructured));
+        for (j = 1, lenD = Number(lastBay); j <= lenD; j += 2) {
+            key = __s__.pad(j, 3);
+            keyEvenPrev = __s__.pad(j - 1, 3);
+
+            if (!dataStructured[key]) { continue; }
+            
+            dataStructured[key].isBlockStart = true;
+            if (numContsByBay[keyEvenPrev]) { dataStructured[key].isBlockStart = false; }
+
+            dataStructured[key].maxCell = _.chain(dataStructured[key].cells).keys().sort().last().value();            
+        }
+        
+        //Min/Max tiers below & above
         iTierMin = Number(_.min(_.keys(belowTiers.tiers)));                  
         iTierMinAbove = Number(_.min(_.keys(aboveTiers.tiers)));
+        iTierMax = Number(_.max(_.keys(belowTiers.tiers)));                  
+        iTierMaxAbove = Number(_.max(_.keys(aboveTiers.tiers)));
 
         return {
             data,
             dataStructured,
+            dataStructuredKeysArr: dataStructuredKeysArr.sort(__s__.sortNumeric),
             belowTiers,
             aboveTiers,
             containersIDs,
@@ -211,9 +238,12 @@ export class DataLoader {
             filters,
             iTierMin,
             iTierMinAbove,
+            iTierMax,
+            iTierMaxAbove,
+            tiers,
             maxWidth,
             firstBay: _.min(_.keys(dataStructured)),
-            lastBay: _.max(_.keys(dataStructured)),
+            lastBay,
             hasZeroCell
         };                           
                     
