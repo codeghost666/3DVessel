@@ -43,7 +43,7 @@ app2d.loadUrl(queryParams.json, i18labels.LOADING_DATA)
 
             //app2d
             app2d.setTitle(loadedData.VesselName, loadedData.PlaceOfDeparture, loadedData.VoyageNumber);
-            app2d.postUrl = "php/generatePDF.php";
+            app2d.postUrl = window.generatePdfRoute;
 
 
         }, function(msg) {
