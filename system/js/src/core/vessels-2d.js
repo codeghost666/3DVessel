@@ -25,7 +25,7 @@ export class VesselsApp2D {
             ],
             dpis: [
                 { name: "300 dpi", res: 300 },
-                { name: "600 dpi", res: 600 }
+                { name: "150 dpi", res: 150 }
             ],
             padding: { w: 0.06, h: 15.0 },
             aboveBelowSep: 2,
@@ -357,7 +357,7 @@ export class VesselsApp2D {
         
         function drawBay(key) {
             let t, tier, c, cell, dataBay = dataStructured[key], dataBay2,
-                cnv, ctx, y, x, titleT = key,           
+                cnv, ctx, y, x, titleT = key, calcFactor,    
                 contWidthCenter = Math.round(contWidth / 2) * me.inchFactor,
                 contHeightFactored = contHeight * me.inchFactor,
                 contWidthFactored = contWidth * me.inchFactor;
@@ -376,12 +376,18 @@ export class VesselsApp2D {
                     titleT += " (" + __s__.pad(Number(key) - 1, 3) + ")";
                 }
             }
-            ctx.font = (24 * fontFactor) + "px Georgia";
-            ctx.textAlign = "center";
-            ctx.fillText(titleT, bayW / 2, Math.max(labelsTopHeight / 2 * me.inchFactor, 20));
 
-            ctx.font = (10 * fontFactor) + "px Arial";
+            calcFactor = fontFactor;
+            if (rws < 7) { calcFactor = calcFactor + (8 - rws) * 0.2; }
+            
+            ctx.font = (24 * calcFactor) + "px Georgia";
             ctx.textAlign = "center";
+            ctx.textBaseline="middle"; 
+            ctx.fillText(titleT, bayW / 2, Math.max(labelsTopHeight / 2 * me.inchFactor, 0));
+
+            ctx.font = (10 * calcFactor) + "px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "baseline"; 
             ctx.fillStyle = "#666666";
             ctx.strokeStyle = "#dddddd"
             ctx.lineWidth = 2 * me.lineWidth;
@@ -448,6 +454,7 @@ export class VesselsApp2D {
                 yAdd = Math.round(14 * me.inchFactor),
                 xPad = Math.round(20 * me.inchFactor),
                 maxX = 0,
+                calcFactor, containerFactor = 1.6,
                 obs, obj;
 
             cnv = document.createElement("canvas");
@@ -455,7 +462,11 @@ export class VesselsApp2D {
             cnv.height = (maxH * me.inchFactor + labelsTopHeight * 2 * me.inchFactor);
             ctx = cnv.getContext("2d");
 
-            ctx.font = (19 * fontFactor) + "px Arial";
+            calcFactor = fontFactor;
+            if (rws < 7) { calcFactor = calcFactor + (8 - rws) * 0.2; }
+            if (rws < 4) { containerFactor = 1.2; }
+
+            ctx.font = (19 * calcFactor) + "px Arial";
             ctx.textAlign = "left";
             ctx.fillStyle = "#444444";
             
@@ -465,7 +476,7 @@ export class VesselsApp2D {
                 obs = data.filters[filterBy].obs[f];
                 obj = { s: 1};
                 obj[filterBy] = f;
-                ctx.drawImage(drawContainer(obj, me.inchFactor * 1.6), x, y);
+                ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor), x, y);
                 ctx.fillText(f, x + 16 * me.inchFactor, y + 8 * me.inchFactor);
                 maxX = Math.round(Math.max(maxX, ctx.measureText(f).width));
                 y += yAdd;
@@ -477,49 +488,49 @@ export class VesselsApp2D {
             //Add Hazardous
             obj = { s: 1, w: 1};
             obj[filterBy] = "";
-            ctx.drawImage(drawContainer(obj, me.inchFactor * 1.6, true), x, y);
+            ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
             ctx.fillText("Hazardous", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
             y += yAdd;
 
             //Add Empty
             obj = { s: 0};
             obj[filterBy] = "";
-            ctx.drawImage(drawContainer(obj, me.inchFactor * 1.6, true), x, y);
+            ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
             ctx.fillText("Empty", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
             y += yAdd;
             
             //Add Reefer
             obj = { s: 1, r: 1};
             obj[filterBy] = "";
-            ctx.drawImage(drawContainer(obj, me.inchFactor * 1.6, true), x, y);
+            ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
             ctx.fillText("Reefer", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
             y += yAdd;
             
             //Add High-cube
             obj = { s: 1, h: 9.5};
             obj[filterBy] = "";
-            ctx.drawImage(drawContainer(obj, me.inchFactor * 1.6, true), x, y);
+            ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
             ctx.fillText("High-cube", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
             y += yAdd;
             
             //Add 40-footer
             obj = { s: 1, l: 40};
             obj[filterBy] = "";
-            ctx.drawImage(drawContainer(obj, me.inchFactor * 1.6, true), x, y);
+            ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
             ctx.fillText("40-footer", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
             y += yAdd;
             
             //Add 45-footer
             obj = { s: 1, l: 45};
             obj[filterBy] = "";
-            ctx.drawImage(drawContainer(obj, me.inchFactor * 1.6, true), x, y);
+            ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
             ctx.fillText("45-footer", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
             y += yAdd;
 
             //Add OOG
             obj = { s: 1, x: 1};
             obj[filterBy] = "";
-            ctx.drawImage(drawContainer(obj, me.inchFactor * 1.6, true), x, y);
+            ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
             ctx.fillText("OOG", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
             y += yAdd;            
             
@@ -671,7 +682,15 @@ export class VesselsApp2D {
                             ctxPage = canvasPage.getContext("2d");
                             pageY = 0;
                         } else {
-                            if ((j+1) % rws !== 0) { pageY -= nextBayH; }                            
+                            if ((j+1) % rws !== 0) { pageY -= nextBayH; }  
+                            if (pageY + nextBayH > height) {
+                                canvasPage = document.createElement("canvas");
+                                canvasPage.width = width; canvasPage.height = height;
+                                ctxPage = canvasPage.getContext("2d");
+                                pageY = 0;
+                                bayImages.push(canvasPage);
+                            }
+
                             ctxPage.drawImage(drawLegend(), 
                                 Math.round(positionsX[(j + 1) % rws] + boxLeft), 
                                 Math.round(pageY + boxTop));

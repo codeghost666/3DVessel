@@ -871,7 +871,7 @@ var VesselsApp2D = (function () {
             loaderColor: "#f2f2f2",
             loaderColorSucess: "#79e3da",
             sizes: [{ name: "Letter", w: 8.5, h: 11.0 }, { name: "Legal", w: 8.5, h: 14.0 }, { name: "A4", w: 8.3, h: 11.7 }, { name: "A3", w: 11.7, h: 16.5 }],
-            dpis: [{ name: "300 dpi", res: 300 }, { name: "600 dpi", res: 600 }],
+            dpis: [{ name: "300 dpi", res: 300 }, { name: "150 dpi", res: 150 }],
             padding: { w: 0.06, h: 15.0 },
             aboveBelowSep: 2
         }, opts);
@@ -1284,6 +1284,7 @@ var VesselsApp2D = (function () {
                     y = undefined,
                     x = undefined,
                     titleT = key,
+                    calcFactor = undefined,
                     contWidthCenter = Math.round(contWidth / 2) * me.inchFactor,
                     contHeightFactored = contHeight * me.inchFactor,
                     contWidthFactored = contWidth * me.inchFactor;
@@ -1302,12 +1303,20 @@ var VesselsApp2D = (function () {
                         titleT += " (" + __s__.pad(Number(key) - 1, 3) + ")";
                     }
                 }
-                ctx.font = 24 * fontFactor + "px Georgia";
-                ctx.textAlign = "center";
-                ctx.fillText(titleT, bayW / 2, Math.max(labelsTopHeight / 2 * me.inchFactor, 20));
 
-                ctx.font = 10 * fontFactor + "px Arial";
+                calcFactor = fontFactor;
+                if (rws < 7) {
+                    calcFactor = calcFactor + (8 - rws) * 0.2;
+                }
+
+                ctx.font = 24 * calcFactor + "px Georgia";
                 ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(titleT, bayW / 2, Math.max(labelsTopHeight / 2 * me.inchFactor, 0));
+
+                ctx.font = 10 * calcFactor + "px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "baseline";
                 ctx.fillStyle = "#666666";
                 ctx.strokeStyle = "#dddddd";
                 ctx.lineWidth = 2 * me.lineWidth;
@@ -1377,6 +1386,8 @@ var VesselsApp2D = (function () {
                     yAdd = Math.round(14 * me.inchFactor),
                     xPad = Math.round(20 * me.inchFactor),
                     maxX = 0,
+                    calcFactor = undefined,
+                    containerFactor = 1.6,
                     obs = undefined,
                     obj = undefined;
 
@@ -1385,7 +1396,15 @@ var VesselsApp2D = (function () {
                 cnv.height = maxH * me.inchFactor + labelsTopHeight * 2 * me.inchFactor;
                 ctx = cnv.getContext("2d");
 
-                ctx.font = 19 * fontFactor + "px Arial";
+                calcFactor = fontFactor;
+                if (rws < 7) {
+                    calcFactor = calcFactor + (8 - rws) * 0.2;
+                }
+                if (rws < 4) {
+                    containerFactor = 1.2;
+                }
+
+                ctx.font = 19 * calcFactor + "px Arial";
                 ctx.textAlign = "left";
                 ctx.fillStyle = "#444444";
 
@@ -1395,7 +1414,7 @@ var VesselsApp2D = (function () {
                     obs = data.filters[filterBy].obs[f];
                     obj = { s: 1 };
                     obj[filterBy] = f;
-                    ctx.drawImage(drawContainer(obj, me.inchFactor * 1.6), x, y);
+                    ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor), x, y);
                     ctx.fillText(f, x + 16 * me.inchFactor, y + 8 * me.inchFactor);
                     maxX = Math.round(Math.max(maxX, ctx.measureText(f).width));
                     y += yAdd;
@@ -1409,49 +1428,49 @@ var VesselsApp2D = (function () {
                 //Add Hazardous
                 obj = { s: 1, w: 1 };
                 obj[filterBy] = "";
-                ctx.drawImage(drawContainer(obj, me.inchFactor * 1.6, true), x, y);
+                ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
                 ctx.fillText("Hazardous", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
                 y += yAdd;
 
                 //Add Empty
                 obj = { s: 0 };
                 obj[filterBy] = "";
-                ctx.drawImage(drawContainer(obj, me.inchFactor * 1.6, true), x, y);
+                ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
                 ctx.fillText("Empty", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
                 y += yAdd;
 
                 //Add Reefer
                 obj = { s: 1, r: 1 };
                 obj[filterBy] = "";
-                ctx.drawImage(drawContainer(obj, me.inchFactor * 1.6, true), x, y);
+                ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
                 ctx.fillText("Reefer", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
                 y += yAdd;
 
                 //Add High-cube
                 obj = { s: 1, h: 9.5 };
                 obj[filterBy] = "";
-                ctx.drawImage(drawContainer(obj, me.inchFactor * 1.6, true), x, y);
+                ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
                 ctx.fillText("High-cube", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
                 y += yAdd;
 
                 //Add 40-footer
                 obj = { s: 1, l: 40 };
                 obj[filterBy] = "";
-                ctx.drawImage(drawContainer(obj, me.inchFactor * 1.6, true), x, y);
+                ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
                 ctx.fillText("40-footer", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
                 y += yAdd;
 
                 //Add 45-footer
                 obj = { s: 1, l: 45 };
                 obj[filterBy] = "";
-                ctx.drawImage(drawContainer(obj, me.inchFactor * 1.6, true), x, y);
+                ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
                 ctx.fillText("45-footer", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
                 y += yAdd;
 
                 //Add OOG
                 obj = { s: 1, x: 1 };
                 obj[filterBy] = "";
-                ctx.drawImage(drawContainer(obj, me.inchFactor * 1.6, true), x, y);
+                ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
                 ctx.fillText("OOG", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
                 y += yAdd;
 
@@ -1619,6 +1638,14 @@ var VesselsApp2D = (function () {
                                 if ((_j + 1) % rws !== 0) {
                                     pageY -= nextBayH;
                                 }
+                                if (pageY + nextBayH > height) {
+                                    canvasPage = document.createElement("canvas");
+                                    canvasPage.width = width;canvasPage.height = height;
+                                    ctxPage = canvasPage.getContext("2d");
+                                    pageY = 0;
+                                    bayImages.push(canvasPage);
+                                }
+
                                 ctxPage.drawImage(drawLegend(), Math.round(positionsX[(_j + 1) % rws] + boxLeft), Math.round(pageY + boxTop));
                             }
                         }
