@@ -82,7 +82,7 @@ export class DataLoader {
             bays = {}, cells = {}, tiers = {}, 
             belowTiers,
             aboveTiers,
-            data, dataStructured, filters, dataStructuredKeysArr = [],
+            data, dataNode, dataStructured, filters, dataStructuredKeysArr = [],
             key, keyEven, keyEvenPrev,
             iTierMin, iTierMinAbove,
             iTierMax, iTierMaxAbove,
@@ -164,9 +164,11 @@ export class DataLoader {
         }
 
         //Initialize the data object
+        dataNode = d["3DVesselData"] || d["2DVesselData"];
+        if (!dataNode) { console.error("No data!. Halting generateStructuredData."); return null; }
         data = {
-            conts: d["3DVesselData"],
-            info: { contsL: d["3DVesselData"].length }
+            conts: dataNode,
+            info: { contsL: dataNode.length }
         };
 
         //Initialize structured data objects
@@ -185,6 +187,7 @@ export class DataLoader {
         addFilter("o", "Operator", false);
         addFilter("d", "Destination", false);
         addFilter("f", "Load Port", false);
+        addFilter("v", "Verified weight", true);
 
         //Iterate through data
         for (j = 0, lenD = data.conts.length; j < lenD; j += 1) {
@@ -199,6 +202,7 @@ export class DataLoader {
             obj.iTier = Number(obj.tier);
             obj.myJ = j;
             obj.cDash = obj.c.replace(/\s/ig, "-");
+            if (obj.f === undefined && obj.ld !== undefined) { obf.f = obj.ld; }
             
             containersIDs["cont_" + obj.cDash] = obj;
             
