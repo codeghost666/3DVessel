@@ -310,7 +310,7 @@ export class VesselsApp2D {
             if (txt) {
                 let calcFactor = fontFactor * inchFactor / me.inchFactor;
                 if (rws < 7) { calcFactor = calcFactor + (8 - rws) * 0.2; }
-                ctx.font = (13 * calcFactor) + "px Arial";
+                ctx.font = (14 * calcFactor) + "px Arial";
                 ctx.textAlign = "center";
                 ctx.fillStyle = "#333333";
                 ctx.fillText(txt, 4 * inchFactor, 7 * inchFactor);
@@ -546,7 +546,23 @@ export class VesselsApp2D {
                 calcFactor, containerFactor = 1.25,
                 extraH = Math.round(contHeight * extraOOGratio * me.inchFactor * containerFactor), 
                 extraW = Math.round(contWidth * extraOOGratio * me.inchFactor * containerFactor),
-                obs, obj;
+                obs, obj, canvases = [], columns = 0;
+
+            function addCanvas() {
+                if (columns > 0 && columns % 2 === 0) {
+                    //create new canvas
+                    cnv = document.createElement("canvas");
+                    cnv.width = (bayW + labelsLeftWidth * 2 * me.inchFactor) * 1.5;
+                    cnv.height = (maxH * me.inchFactor + labelsTopHeight * 2 * me.inchFactor);
+                    ctx = cnv.getContext("2d");
+                    ctx.font = (19 * calcFactor) + "px Arial";
+                    ctx.textAlign = "left";
+                    ctx.fillStyle = "#444444";
+                    
+                    x = xInit; y = yInit;
+                    canvases.push(cnv);
+                }
+            }
 
             function addLabel(txt, obj) {
                 obj[filterBy] = "";
@@ -555,13 +571,14 @@ export class VesselsApp2D {
                 ctx.fillText(txt, x + 14 * me.inchFactor, y + 8 * me.inchFactor);
                 maxX = Math.round(Math.max(maxX, ctx.measureText(txt).width));
                 y += yAdd;                
-                if (y + yAdd > cnv.height) { y = yInit; x += xInit + xPad + maxX; maxX = 0; }
+                if (y + yAdd > cnv.height) { y = yInit; x += xInit + xPad + maxX; maxX = 0; columns += 1; addCanvas(); }
             }
 
             cnv = document.createElement("canvas");
-            cnv.width = (bayW + labelsLeftWidth * 2 * me.inchFactor) * 2;
+            cnv.width = (bayW + labelsLeftWidth * 2 * me.inchFactor) * 1.5;
             cnv.height = (maxH * me.inchFactor + labelsTopHeight * 2 * me.inchFactor);
             ctx = cnv.getContext("2d");
+            canvases.push(cnv);
 
             calcFactor = fontFactor;
             if (rws < 7) { calcFactor = calcFactor + (8 - rws) * 0.2; }
@@ -581,7 +598,10 @@ export class VesselsApp2D {
                 ctx.fillText(f, x + 16 * me.inchFactor, y + 8 * me.inchFactor);
                 maxX = Math.round(Math.max(maxX, ctx.measureText(f).width));
                 y += yAdd;
-                if (y + yAdd > cnv.height) { y = yInit; x += xInit + xPad + maxX; maxX = 0 }
+                if (y + yAdd > cnv.height) { 
+                    y = yInit; x += xInit + xPad + maxX; maxX = 0; columns += 1;
+                    addCanvas();
+                }
             }
 
             //Add Labels
@@ -600,7 +620,8 @@ export class VesselsApp2D {
             addLabel("Oversize Front", { s: 1, g: "f"});       
             addLabel("Oversize Back", { s: 1, g: "b"});       
 
-            return cnv;
+            //console.log(canvases.length);
+            return canvases;
         }
 
         function sendPagesToServer() {
@@ -626,7 +647,15 @@ export class VesselsApp2D {
                 pageSizeW: me.options.sizes[me._node.dropdwnSz.value][isLndscp ? "h" : "w"],
                 pageSizeH: me.options.sizes[me._node.dropdwnSz.value][isLndscp ? "w" : "h"] - 1,
                 pageOrientation: !isLndscp ? "P" : "L",
-                filterBy: i18labels.PRINTOPTS_COLORBY + ": " + data.filters[filterBy].name
+                filterBy: i18labels.PRINTOPTS_COLORBY + ": " + data.filters[filterBy].name,
+                vesselName: me.metaData.vesselName,
+                vesselCallSign: me.metaData.vesselCallSign,
+                sender: me.metaData.sender,
+                recipient: me.metaData.recipient,
+                placeOfDeparture: me.metaData.placeOfDeparture,
+                voyageNumber: me.metaData.voyageNumber,
+                footerLeft: me.metaData.footerLeft,
+                footerRight: me.metaData.footerRight
             };
             for (j = 0, lenJ = bayImages.length; j < lenJ; j += 1) {
                 json["page_" + j] = bayImages[j].toDataURL("image/png");
@@ -779,17 +808,25 @@ export class VesselsApp2D {
                             pageY = 0;
                         } else {
                             if ((j+1) % rws !== 0) { pageY -= nextBayH; }  
-                            if (pageY + nextBayH > height) {
-                                canvasPage = document.createElement("canvas");
-                                canvasPage.width = width; canvasPage.height = height;
-                                ctxPage = canvasPage.getContext("2d");
-                                pageY = 0;
-                                bayImages.push(canvasPage);
-                            }
 
-                            ctxPage.drawImage(drawLegend(), 
-                                Math.round(positionsX[(j + 1) % rws] + boxLeft), 
-                                Math.round(pageY + boxTop));
+                            let canvases = drawLegend(), nX;
+                            for (let k = 0, lenK = canvases.length; k < lenK; k += 1) {
+                                nX = j + k + 1;
+                                if (pageY + nextBayH > height) {
+                                    canvasPage = document.createElement("canvas");
+                                    canvasPage.width = width; canvasPage.height = height;
+                                    ctxPage = canvasPage.getContext("2d");
+                                    pageY = 0;
+                                    bayImages.push(canvasPage);
+                                }
+                                
+                                ctxPage.drawImage(canvases[k], 
+                                    Math.round(positionsX[nX % rws] + boxLeft), 
+                                    Math.round(pageY + boxTop));
+
+                                if (nX % rws === rws) { pageY += nextBayH; }
+
+                            }
                         }
                         //break; //Uncomment to generate only 1 page (for testing purposes)
                     }
@@ -812,6 +849,19 @@ export class VesselsApp2D {
         if (title) {
             this.title = title;
         }
+    }
+
+    setMetaData(vesselName, vesselCallSign, sender, recipient, placeOfDeparture, voyageNumber, footerLeft, footerRight) {
+        this.metaData = {
+            vesselName: vesselName,
+            vesselCallSign:vesselCallSign,
+            sender: sender,
+            recipient: recipient,
+            placeOfDeparture: placeOfDeparture,
+            voyageNumber: voyageNumber,
+            footerLeft: footerLeft,
+            footerRight: footerRight
+        };
     }
 
 

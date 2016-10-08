@@ -19,6 +19,15 @@
     $filterBy = $_POST["filterBy"];
     $num_images = intval($_POST["numImages"]);
 
+    $vesselName = $_POST["vesselName"];
+    $vesselCallSign = $_POST["vesselCallSign"];
+    $sender = $_POST["sender"];
+    $recipient = $_POST["recipient"];
+    $placeOfDeparture = $_POST["placeOfDeparture"];
+    $voyageNumber = $_POST["voyageNumber"];
+    $footerLeft = $_POST["footerLeft"];
+    $footerRight = $_POST["footerRight"];
+
     function saveImage($id, $name, $data, $loc) {
         
         //check there is an image
@@ -57,22 +66,47 @@
         // Cabecera de página
         function Header()
         {
-            $this->SetY(0);
+            $leftText = "";
+            if (isset($GLOBALS["sender"])) { $leftText .= "Sender: " . $GLOBALS['sender'] . "\n"; }
+            if (isset($GLOBALS["recipient"])) { $leftText .= "Recipient: " . $GLOBALS['recipient']; }
+
+            $rightText = "";
+            if (isset($GLOBALS["voyageNumber"])) { $rightText .= "Voyage: " . $GLOBALS['voyageNumber'] . "\n"; }
+            if (isset($GLOBALS["vesselCallSign"])) { $rightText .= "Call-Sign: " . $GLOBALS['vesselCallSign'] . "\n"; }
+            if (isset($GLOBALS["placeOfDeparture"])) { $rightText .= "Departure: " . $GLOBALS['placeOfDeparture'] . "\n"; }
+                        
+            $ww = ($GLOBALS['page_size_w'] - 1) / 3;
+            $this->SetXY(0.5, 0.2);
+            $this->SetFont('Arial','',7);
+            $this->MultiCell($ww,0.12,$leftText, 0, 'L');
+
+            $this->SetXY(0.5 + $ww, 0.1);
             $this->SetFont('Arial','B',15);
-            $this->Cell(0,0.5, $GLOBALS['title'], 0, 0, 'C');
+            $this->Cell($ww,0.5, $GLOBALS['vesselName'], 0, 0, 'C');
+
+            $this->SetXY(0.5 + $ww * 2, 0.2);
+            $this->SetFont('Arial','',7);
+            $this->MultiCell($ww,0.12,$rightText, 0, 'R');
         }
 
         // Pie de página
         function Footer()
         {
+            $leftText = $GLOBALS['filterBy'] . "\n" .$GLOBALS['footerLeft'];
+            $rightText = date('jS \of F Y h:i:s A') . "\n" .$GLOBALS['footerRight'];
+
             $ww = ($GLOBALS['page_size_w'] - 1) / 3;
             $this->SetY(-0.5);
             $this->SetFont('Arial','',7);
-            $this->Cell($ww,0.5,$GLOBALS['filterBy'], 0, 0, 'L');
+            $this->MultiCell($ww,0.12,$leftText, 0, 'L');
+
+            $this->SetXY(0.5 + $ww, -0.5);           
             $this->SetFont('Arial','I',7);
-            $this->Cell($ww,0.5,'Page '.$this->PageNo().'/{nb}', 0, 0, 'C');
+            $this->MultiCell($ww,0.5,'Page '.$this->PageNo().'/{nb}', 0, 'C');
+
+            $this->SetXY(0.5 + $ww * 2, -0.5);            
             $this->SetFont('Arial','',7);
-            $this->Cell($ww,0.5,date('jS \of F Y h:i:s A'), 0, 0, 'R');
+            $this->MultiCell($ww,0.12,$rightText, 0, 'R');
         }
     }    
 

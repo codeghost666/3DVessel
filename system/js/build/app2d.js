@@ -48,6 +48,7 @@ app2d.loadUrl(queryParams.json, i18labels.LOADING_DATA).then(function (loadedDat
 
     //app2d
     app2d.setTitle(loadedData.VesselName, loadedData.PlaceOfDeparture, loadedData.VoyageNumber);
+    app2d.setMetaData(loadedData.VesselName, loadedData.VesselCallSign, loadedData.Sender, loadedData.Recipient, loadedData.PlaceOfDeparture, loadedData.VoyageNumber, loadedData.FooterLeft, loadedData.FooterRight);
     app2d.postUrl = window.generatePdfRoute;
 }, function (msg) {
     console.error(msg);
@@ -1236,7 +1237,7 @@ var VesselsApp2D = (function () {
                     if (rws < 7) {
                         calcFactor = calcFactor + (8 - rws) * 0.2;
                     }
-                    ctx.font = 13 * calcFactor + "px Arial";
+                    ctx.font = 14 * calcFactor + "px Arial";
                     ctx.textAlign = "center";
                     ctx.fillStyle = "#333333";
                     ctx.fillText(txt, 4 * inchFactor, 7 * inchFactor);
@@ -1500,7 +1501,25 @@ var VesselsApp2D = (function () {
                     extraH = Math.round(contHeight * extraOOGratio * me.inchFactor * containerFactor),
                     extraW = Math.round(contWidth * extraOOGratio * me.inchFactor * containerFactor),
                     obs = undefined,
-                    obj = undefined;
+                    obj = undefined,
+                    canvases = [],
+                    columns = 0;
+
+                function addCanvas() {
+                    if (columns > 0 && columns % 2 === 0) {
+                        //create new canvas
+                        cnv = document.createElement("canvas");
+                        cnv.width = (bayW + labelsLeftWidth * 2 * me.inchFactor) * 1.5;
+                        cnv.height = maxH * me.inchFactor + labelsTopHeight * 2 * me.inchFactor;
+                        ctx = cnv.getContext("2d");
+                        ctx.font = 19 * calcFactor + "px Arial";
+                        ctx.textAlign = "left";
+                        ctx.fillStyle = "#444444";
+
+                        x = xInit;y = yInit;
+                        canvases.push(cnv);
+                    }
+                }
 
                 function addLabel(txt, obj) {
                     obj[filterBy] = "";
@@ -1512,14 +1531,15 @@ var VesselsApp2D = (function () {
                     maxX = Math.round(Math.max(maxX, ctx.measureText(txt).width));
                     y += yAdd;
                     if (y + yAdd > cnv.height) {
-                        y = yInit;x += xInit + xPad + maxX;maxX = 0;
+                        y = yInit;x += xInit + xPad + maxX;maxX = 0;columns += 1;addCanvas();
                     }
                 }
 
                 cnv = document.createElement("canvas");
-                cnv.width = (bayW + labelsLeftWidth * 2 * me.inchFactor) * 2;
+                cnv.width = (bayW + labelsLeftWidth * 2 * me.inchFactor) * 1.5;
                 cnv.height = maxH * me.inchFactor + labelsTopHeight * 2 * me.inchFactor;
                 ctx = cnv.getContext("2d");
+                canvases.push(cnv);
 
                 calcFactor = fontFactor;
                 if (rws < 7) {
@@ -1544,7 +1564,8 @@ var VesselsApp2D = (function () {
                     maxX = Math.round(Math.max(maxX, ctx.measureText(f).width));
                     y += yAdd;
                     if (y + yAdd > cnv.height) {
-                        y = yInit;x += xInit + xPad + maxX;maxX = 0;
+                        y = yInit;x += xInit + xPad + maxX;maxX = 0;columns += 1;
+                        addCanvas();
                     }
                 }
 
@@ -1564,7 +1585,8 @@ var VesselsApp2D = (function () {
                 addLabel("Oversize Front", { s: 1, g: "f" });
                 addLabel("Oversize Back", { s: 1, g: "b" });
 
-                return cnv;
+                //console.log(canvases.length);
+                return canvases;
             }
 
             function sendPagesToServer() {
@@ -1596,7 +1618,15 @@ var VesselsApp2D = (function () {
                     pageSizeW: me.options.sizes[me._node.dropdwnSz.value][isLndscp ? "h" : "w"],
                     pageSizeH: me.options.sizes[me._node.dropdwnSz.value][isLndscp ? "w" : "h"] - 1,
                     pageOrientation: !isLndscp ? "P" : "L",
-                    filterBy: i18labels.PRINTOPTS_COLORBY + ": " + data.filters[filterBy].name
+                    filterBy: i18labels.PRINTOPTS_COLORBY + ": " + data.filters[filterBy].name,
+                    vesselName: me.metaData.vesselName,
+                    vesselCallSign: me.metaData.vesselCallSign,
+                    sender: me.metaData.sender,
+                    recipient: me.metaData.recipient,
+                    placeOfDeparture: me.metaData.placeOfDeparture,
+                    voyageNumber: me.metaData.voyageNumber,
+                    footerLeft: me.metaData.footerLeft,
+                    footerRight: me.metaData.footerRight
                 };
                 for (j = 0, lenJ = bayImages.length; j < lenJ; j += 1) {
                     json["page_" + j] = bayImages[j].toDataURL("image/png");
@@ -1764,15 +1794,25 @@ var VesselsApp2D = (function () {
                                 if ((_j + 1) % rws !== 0) {
                                     pageY -= nextBayH;
                                 }
-                                if (pageY + nextBayH > height) {
-                                    canvasPage = document.createElement("canvas");
-                                    canvasPage.width = width;canvasPage.height = height;
-                                    ctxPage = canvasPage.getContext("2d");
-                                    pageY = 0;
-                                    bayImages.push(canvasPage);
-                                }
 
-                                ctxPage.drawImage(drawLegend(), Math.round(positionsX[(_j + 1) % rws] + boxLeft), Math.round(pageY + boxTop));
+                                var canvases = drawLegend(),
+                                    nX = undefined;
+                                for (var k = 0, lenK = canvases.length; k < lenK; k += 1) {
+                                    nX = _j + k + 1;
+                                    if (pageY + nextBayH > height) {
+                                        canvasPage = document.createElement("canvas");
+                                        canvasPage.width = width;canvasPage.height = height;
+                                        ctxPage = canvasPage.getContext("2d");
+                                        pageY = 0;
+                                        bayImages.push(canvasPage);
+                                    }
+
+                                    ctxPage.drawImage(canvases[k], Math.round(positionsX[nX % rws] + boxLeft), Math.round(pageY + boxTop));
+
+                                    if (nX % rws === rws) {
+                                        pageY += nextBayH;
+                                    }
+                                }
                             }
                             //break; //Uncomment to generate only 1 page (for testing purposes)
                         }
@@ -1793,6 +1833,20 @@ var VesselsApp2D = (function () {
             if (title) {
                 this.title = title;
             }
+        }
+    }, {
+        key: 'setMetaData',
+        value: function setMetaData(vesselName, vesselCallSign, sender, recipient, placeOfDeparture, voyageNumber, footerLeft, footerRight) {
+            this.metaData = {
+                vesselName: vesselName,
+                vesselCallSign: vesselCallSign,
+                sender: sender,
+                recipient: recipient,
+                placeOfDeparture: placeOfDeparture,
+                voyageNumber: voyageNumber,
+                footerLeft: footerLeft,
+                footerRight: footerRight
+            };
         }
     }]);
 
