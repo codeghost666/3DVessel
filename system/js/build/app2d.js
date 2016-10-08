@@ -617,16 +617,16 @@ var DataLoader = (function () {
 
             //Initialize filters
             filters = {};
-            addFilter("i", "Container ISO", false);
-            addFilter("s", "Full", true);
-            addFilter("r", "Reefer", true);
-            addFilter("w", "Hazardous", true);
-            addFilter("t", "Tank", true);
-            addFilter("x", "OOG", true);
-            addFilter("o", "Operator", false);
-            addFilter("d", "Destination", false);
-            addFilter("f", "Load Port", false);
-            addFilter("v", "Verified weight", true);
+            addFilter("i", "ISO Code", false);
+            addFilter("s", "Status", true);
+            addFilter("r", "Is Reefer", true);
+            addFilter("w", "Is Hazardous", true);
+            addFilter("t", "Is Tank", true);
+            addFilter("x", "Is OOG", true);
+            addFilter("o", "Line Operator", false);
+            addFilter("d", "Port of Discharge", false);
+            addFilter("f", "Port of Load", false);
+            addFilter("v", "Is VGM Weight", true);
 
             //Iterate through data
             for (j = 0, lenD = data.conts.length; j < lenD; j += 1) {
