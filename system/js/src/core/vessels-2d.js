@@ -249,7 +249,8 @@ export class VesselsApp2D {
         let me = this,
             aboveBelowSep = this.options.aboveBelowSep,
             data = this.data,
-            dataStructured = data.dataStructured,
+            dataStructured = _.clone(data.dataStructured),
+            dataStructuredKeysArr = _.clone(data.dataStructuredKeysArr),
             hasZeroCell = data.hasZeroCell,
             maxH, maxW, j, lenJ,
             positionsX = [0],
@@ -262,10 +263,13 @@ export class VesselsApp2D {
             divProgress = this._node.divProgress,
             labelsTopHeight = 5,
             labelsLeftWidth = 5,
+            extraOOGratio = 1 / 4,
+            extraHbase, 
+            extraWbase,            
             boxW, boxH, boxTimesH, boxTop, boxLeft,    
             fontFactor = 1;
 
-        function drawContainer(obj, inchFactor = me.inchFactor, noColor = false) {
+        function drawContainer(obj, inchFactor = me.inchFactor, noColor = false, onlyPlus = false) {
             let canvas = document.createElement("canvas"), ctx, color, txt; 
             
             canvas.width = contWidth * inchFactor;
@@ -285,6 +289,16 @@ export class VesselsApp2D {
             ctx.rect(0, 0, contWidth * inchFactor, contHeight * inchFactor);
             ctx.fill();
             ctx.stroke();
+
+            if (onlyPlus) {
+                ctx.beginPath();
+                ctx.fillStyle = "#666666";
+                ctx.rect(contWidth * inchFactor / 9 * 4, contHeight * inchFactor / 9 * 3, contWidth * inchFactor / 9, contHeight * inchFactor / 9 * 3);
+                ctx.fill();
+                ctx.rect(contWidth * inchFactor / 9 * 3, contHeight * inchFactor / 9 * 4, contWidth * inchFactor / 9 * 3, contHeight * inchFactor / 9);
+                ctx.fill();
+                return canvas;
+            }
         
             if (!obj.s) { //Not full
                 txt = "e";
@@ -327,12 +341,13 @@ export class VesselsApp2D {
                 ctx.fill();
             }
 
+            /*
             if (obj.x) { //OOG
                 ctx.fillStyle = "#333333";
                 ctx.beginPath();
                 ctx.arc(contWidth * inchFactor, contHeight * inchFactor / 4 * 3, 2 * inchFactor, 0, 1.5 * Math.PI);
                 ctx.fill();
-            }
+            }*/
 
             switch (obj.l) { //Length
                 case 40:
@@ -350,7 +365,68 @@ export class VesselsApp2D {
                     break;
             }
 
+            return canvas;
+        }
 
+        function drawContainerPlus(obj, inchFactor = me.inchFactor, noColor = false) {
+            return drawContainer(obj, inchFactor, noColor, true);
+        }
+
+        function drawContainerOOG(obj, inchFactor = me.inchFactor) {
+            let canvas = document.createElement("canvas"), ctx, color, txt,
+                oog = obj.g,
+                cW = contWidth * inchFactor,
+                cH = contHeight * inchFactor,
+                extraH = contHeight * extraOOGratio * inchFactor, 
+                extraW = contWidth * extraOOGratio * inchFactor,    
+                tw = cW + extraH * 2,
+                th = cH + extraW * 2;
+            
+            canvas.width = tw;
+            canvas.height = th;
+            ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#444444";
+
+            if (oog.indexOf("t") >= 0) {
+                ctx.beginPath();
+                ctx.ellipse(tw / 2, extraH, cW / 2, extraH, 0, Math.PI, 2 * Math.PI);
+                ctx.fill();
+            }
+
+            if (oog.indexOf("l") >= 0) {
+                ctx.beginPath();
+                ctx.ellipse(extraW, th / 2, extraW, cH / 2, 0, 1 / 2 * Math.PI, 3 / 2 * Math.PI);
+                ctx.fill();
+            }
+
+            if (oog.indexOf("r") >= 0) {
+                ctx.beginPath();
+                ctx.ellipse(extraW + cW, th / 2, extraW, cH / 2, 0, 3 / 2 * Math.PI, 1 / 2 * Math.PI);
+                ctx.fill();
+            }
+
+            if (oog.indexOf("f") >= 0) {
+                ctx.beginPath();
+                ctx.moveTo(extraW, extraH + cH / 4);
+                ctx.lineTo(extraW + cW, extraH + cH / 4);
+                ctx.stroke();
+            }
+
+            if (oog.indexOf("b") >= 0) {
+                ctx.beginPath();
+                ctx.moveTo(extraW, cH + extraH - cH / 4);
+                ctx.lineTo(extraW + cW, cH + extraH - cH / 4);
+                ctx.stroke();
+            }
+
+            if (oog.indexOf("x") >= 0) {
+                ctx.beginPath();
+                ctx.moveTo(extraW, extraH);
+                ctx.lineTo(tw - extraW, th - extraH);
+                ctx.moveTo(tw - extraW, extraH);
+                ctx.lineTo(extraW, th - extraH);
+                ctx.stroke();
+            }                                
 
             return canvas;
         }
@@ -423,6 +499,19 @@ export class VesselsApp2D {
                 }
             }
 
+            //2nd pass for OOG extras icons
+            for (c in dataBay.cells) {
+                cell = dataBay.cells[c];
+                for (t in cell.tiers) {
+                    if (!cell.tiers[t].g) { continue; }
+                    x = (mapCells[Number(c)] + labelsLeftWidth) * me.inchFactor;
+                    y = (mapTiers[Number(t)] - contHeight + labelsTopHeight) * me.inchFactor;
+                    let cnt = drawContainerOOG(cell.tiers[t]);
+                    ctx.drawImage(cnt, x - extraWbase, y - extraHbase);
+                }
+            }
+            
+
             //Add even bays if not blockStart
             if (!dataBay.isBlockStart) {
                 dataBay = dataStructured[__s__.pad(Number(key) - 2, 3)];
@@ -434,7 +523,7 @@ export class VesselsApp2D {
                             if (cell.tiers[t].iBay & 1) { continue; }
                             x = (mapCells[Number(c)] + labelsLeftWidth) * me.inchFactor;
                             y = (mapTiers[Number(t)] - contHeight + labelsTopHeight) * me.inchFactor;
-                            let cnt = drawContainer(cell.tiers[t]);
+                            let cnt = drawContainerPlus(cell.tiers[t]);
                             ctx.drawImage(cnt, x, y);
                         }
                     }
@@ -452,13 +541,25 @@ export class VesselsApp2D {
                 xInit = Math.round(6 * me.inchFactor),
                 yInit = Math.round(labelsTopHeight * me.inchFactor * 2),
                 yAdd = Math.round(14 * me.inchFactor),
-                xPad = Math.round(20 * me.inchFactor),
+                xPad = Math.round(18 * me.inchFactor),
                 maxX = 0,
-                calcFactor, containerFactor = 1.6,
+                calcFactor, containerFactor = 1.25,
+                extraH = Math.round(contHeight * extraOOGratio * me.inchFactor * containerFactor), 
+                extraW = Math.round(contWidth * extraOOGratio * me.inchFactor * containerFactor),
                 obs, obj;
 
+            function addLabel(txt, obj) {
+                obj[filterBy] = "";
+                ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
+                if (obj.g) { ctx.drawImage(drawContainerOOG(obj, me.inchFactor * containerFactor, true), x - extraW, y - extraH); }
+                ctx.fillText(txt, x + 14 * me.inchFactor, y + 8 * me.inchFactor);
+                maxX = Math.round(Math.max(maxX, ctx.measureText(txt).width));
+                y += yAdd;                
+                if (y + yAdd > cnv.height) { y = yInit; x += xInit + xPad + maxX; maxX = 0; }
+            }
+
             cnv = document.createElement("canvas");
-            cnv.width = (bayW + labelsLeftWidth * 2 * me.inchFactor);
+            cnv.width = (bayW + labelsLeftWidth * 2 * me.inchFactor) * 2;
             cnv.height = (maxH * me.inchFactor + labelsTopHeight * 2 * me.inchFactor);
             ctx = cnv.getContext("2d");
 
@@ -480,60 +581,25 @@ export class VesselsApp2D {
                 ctx.fillText(f, x + 16 * me.inchFactor, y + 8 * me.inchFactor);
                 maxX = Math.round(Math.max(maxX, ctx.measureText(f).width));
                 y += yAdd;
-                if (y + yAdd > cnv.height) { y = yInit; x += xInit + xPad + maxX; }
+                if (y + yAdd > cnv.height) { y = yInit; x += xInit + xPad + maxX; maxX = 0 }
             }
 
-            y = yInit; x += xInit + xPad + maxX;
-
-            //Add Hazardous
-            obj = { s: 1, w: 1};
-            obj[filterBy] = "";
-            ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
-            ctx.fillText("Hazardous", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
-            y += yAdd;
-
-            //Add Empty
-            obj = { s: 0};
-            obj[filterBy] = "";
-            ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
-            ctx.fillText("Empty", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
-            y += yAdd;
-            
-            //Add Reefer
-            obj = { s: 1, r: 1};
-            obj[filterBy] = "";
-            ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
-            ctx.fillText("Reefer", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
-            y += yAdd;
-            
-            //Add High-cube
-            obj = { s: 1, h: 9.5};
-            obj[filterBy] = "";
-            ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
-            ctx.fillText("High-cube", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
-            y += yAdd;
-            
-            //Add 40-footer
-            obj = { s: 1, l: 40};
-            obj[filterBy] = "";
-            ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
-            ctx.fillText("40-footer", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
-            y += yAdd;
-            
-            //Add 45-footer
-            obj = { s: 1, l: 45};
-            obj[filterBy] = "";
-            ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
-            ctx.fillText("45-footer", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
-            y += yAdd;
+            //Add Labels
+            addLabel("Hazardous", { s: 1, w: 1});
+            addLabel("Empty", { s: 0});
+            addLabel("Reefer", { s: 1, r: 1});
+            addLabel("High-cube", { s: 1, h: 9.5});
+            addLabel("40-footer", { s: 1, l: 40});
+            addLabel("45-footer", { s: 1, l: 45});
 
             //Add OOG
-            obj = { s: 1, x: 1};
-            obj[filterBy] = "";
-            ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
-            ctx.fillText("OOG", x + 16 * me.inchFactor, y + 8 * me.inchFactor);
-            y += yAdd;            
-            
+            addLabel("Break Bulk", { s: 1, g: "x"});       
+            addLabel("Oversize Top", { s: 1, g: "t"});       
+            addLabel("Oversize Left", { s: 1, g: "l"});       
+            addLabel("Oversize Right", { s: 1, g: "r"});       
+            addLabel("Oversize Front", { s: 1, g: "f"});       
+            addLabel("Oversize Back", { s: 1, g: "b"});       
+
             return cnv;
         }
 
@@ -590,9 +656,35 @@ export class VesselsApp2D {
             });
         }
 
-        function receivePdfFromServer(res) {
+        function extendBaysToMissing() {
+            let j, lenJ, n,
+                dataStructuredKeysArrExtended = [], cBay, key, iBay,
+                nextOdd;
 
+            for (j = 0, lenJ = dataStructuredKeysArr.length; j < lenJ; j += 1) {
+                key = dataStructuredKeysArr[j];
+                dataStructuredKeysArrExtended.push(key);
+                iBay = Number(key);
+                cBay = dataStructured[key]; 
+                n = j + 1;
+
+                if (cBay.isBlockStart && 
+                    (n < lenJ && Number(dataStructuredKeysArr[n]) !== iBay + 2) || (n === lenJ)) {
+                    nextOdd = __s__.pad(iBay + 2, 3);
+                    dataStructuredKeysArrExtended.push(nextOdd);
+                    dataStructured[nextOdd] = { 
+                        n: 0, 
+                        maxD: cBay.maxD,
+                        isBlockStart: false,
+                        cells: {},
+                        maxCell: cBay.maxCell
+                    };
+                }
+            }
+            dataStructuredKeysArr = dataStructuredKeysArrExtended;
         }
+
+        extendBaysToMissing();
 
         //Show progress
         if (divForm) { divForm.style.display = "none"; }
@@ -613,6 +705,10 @@ export class VesselsApp2D {
         this.inchFactor = bayW / maxW; // (1 / Math.max(maxH / height, maxW / bayW));
         fontFactor = res / 300;
 
+        //Extra size for OOG
+        extraHbase = contHeight * extraOOGratio * me.inchFactor;
+        extraWbase = contWidth * extraOOGratio * me.inchFactor;       
+
         //Positions in pixels for each Bay
         for(j = 1; j < rws; j += 1) { positionsX[j] = positionsX[j - 1] + bayW + paddingW; }
 
@@ -621,7 +717,7 @@ export class VesselsApp2D {
         nextBayH = bayH + me.options.padding.h * this.inchFactor;
         boxW = bayW * rws + paddingW * (rws - 1);
 
-        boxTimesH = Math.min(Math.floor(height / nextBayH), Math.ceil(data.dataStructuredKeysArr.length / rws));
+        boxTimesH = Math.min(Math.floor(height / nextBayH), Math.ceil(dataStructuredKeysArr.length / rws));
         boxH = boxTimesH * bayH + (boxTimesH - 1) * me.options.padding.h * this.inchFactor;
 
         boxTop  = Math.round((height - boxH) / 2);
@@ -630,7 +726,7 @@ export class VesselsApp2D {
         //console.log("Dimensions", { bayW, bayH, nextBayH, boxW, boxH, boxLeft, boxTop });
 
         //Cells positions
-        maxCell = Number(_.max(data.dataStructured, (k) => k.maxCell).maxCell);
+        maxCell = Number(_.max(dataStructured, (k) => k.maxCell).maxCell);
         cellsWidth = (maxCell + (hasZeroCell ? 1 : 0)) * contWidth;
         let lPos = 0, rPos = cellsWidth - contWidth;
         for(j = maxCell, lenJ = hasZeroCell ? 0 : 1; j >= lenJ; j -= 1) {
@@ -663,11 +759,11 @@ export class VesselsApp2D {
 
         setTimeout(function() {
             //Iterate bays & pages
-            for (let j = 0, lenJ = data.dataStructuredKeysArr.length ; j < lenJ; j += 1) {
-                let bayInfo = data.dataStructuredKeysArr[j];
+            for (let j = 0, lenJ = dataStructuredKeysArr.length ; j < lenJ; j += 1) {
+                let bayInfo = dataStructuredKeysArr[j];
                 if (!bayInfo) { continue;} 
 
-                let im = drawBay(data.dataStructuredKeysArr[j]);
+                let im = drawBay(dataStructuredKeysArr[j]);
                 ctxPage.drawImage(im, positionsX[j % rws] + boxLeft, pageY + boxTop);
 
                 if ((j+1) % rws === 0 || (j + 1) === lenJ) {
@@ -695,8 +791,9 @@ export class VesselsApp2D {
                                 Math.round(positionsX[(j + 1) % rws] + boxLeft), 
                                 Math.round(pageY + boxTop));
                         }
+                        //break; //Uncomment to generate only 1 page (for testing purposes)
                     }
-                }            
+                }
             }
 
             divProgress.innerHTML = i18labels.PRINTOPTS_SENDINGPAGES;
