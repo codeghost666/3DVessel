@@ -67,13 +67,13 @@
         function Header()
         {
             $leftText = "";
-            if (isset($GLOBALS["sender"])) { $leftText .= "Sender: " . $GLOBALS['sender'] . "\n"; }
-            if (isset($GLOBALS["recipient"])) { $leftText .= "Recipient: " . $GLOBALS['recipient']; }
+            if (isset($GLOBALS["sender"])) { $leftText .= "EDI Sender: " . $GLOBALS['sender'] . "\n"; }
+            if (isset($GLOBALS["recipient"])) { $leftText .= "EDI Recipient: " . $GLOBALS['recipient']; }
 
             $rightText = "";
-            if (isset($GLOBALS["voyageNumber"])) { $rightText .= "Voyage: " . $GLOBALS['voyageNumber'] . "\n"; }
-            if (isset($GLOBALS["vesselCallSign"])) { $rightText .= "Call-Sign: " . $GLOBALS['vesselCallSign'] . "\n"; }
-            if (isset($GLOBALS["placeOfDeparture"])) { $rightText .= "Departure: " . $GLOBALS['placeOfDeparture'] . "\n"; }
+            if (isset($GLOBALS["voyageNumber"])) { $rightText .= "Vessel Voyage: " . $GLOBALS['voyageNumber'] . "\n"; }
+            if (isset($GLOBALS["vesselCallSign"])) { $rightText .= "Vessel Call-Sign: " . $GLOBALS['vesselCallSign'] . "\n"; }
+            if (isset($GLOBALS["placeOfDeparture"])) { $rightText .= "Place of Departure: " . $GLOBALS['placeOfDeparture'] . "\n"; }
                         
             $ww = ($GLOBALS['page_size_w'] - 1) / 3;
             $this->SetXY(0.5, 0.2);
