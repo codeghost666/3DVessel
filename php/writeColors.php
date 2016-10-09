@@ -21,7 +21,6 @@ require_once 'db.php';
 use Illuminate\Database\Capsule\Manager as DB;
 $colors = DB::table('viewer_user_colors')->where('username', $username)->get();
 
-
 foreach ($data as $r=>$rowColor) {
     $key = $rowColor['attributeKey'];
     $prop = $rowColor['attributeValue'];
@@ -39,11 +38,14 @@ foreach ($data as $r=>$rowColor) {
             ['attribute_value', '=', $prop],
             ['username', '=', $username]
         ])->update(['hex_color' => $hexColor]);
+        echo "UPD " . $vuc->ID . "\n";
     } else {
-        DB::table('viewer_user_colors')->insert(
-            ['attribute_key' => $key, 'attribute_value' => $prop, 'hex_color' => $hexColor, 'username' => $username ]
+        $dbId = DB::table('viewer_user_colors')->insertGetId(
+            array('attribute_key' => $key, 'attribute_value' => $prop, 'hex_color' => $hexColor, 'username' => $username )
         );
-    }    
+        echo "INS " . $dbId . "\n";
+    }
 }
 
 ?>
+

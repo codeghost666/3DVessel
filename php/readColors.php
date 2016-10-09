@@ -25,9 +25,3 @@ if($datagroup[1]>0){
 	}
 }
 ?>
-
-<script>
-    var userSettings = { 
-            colors: <?php echo json_encode($response) ?>
-    };
-</script>
