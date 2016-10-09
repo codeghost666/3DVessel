@@ -152,6 +152,7 @@ export class DataLoader {
             if (!filters.f.obs[ob.f]) { filters.f.obs[ob.f] = { c: 1, indexes: [] }; }
             if (!filters.t.obs[ob.t]) { filters.t.obs[ob.t] = { c: 1, indexes: [] }; }
             if (!filters.x.obs[ob.x]) { filters.x.obs[ob.x] = { c: 1, indexes: [] }; }
+            if (!filters.v.obs[ob.v]) { filters.v.obs[ob.v] = { c: 1, indexes: [] }; }
             filters.s.obs[ob.s].indexes.push(ob);
             filters.i.obs[ob.i].indexes.push(ob);
             filters.r.obs[ob.r].indexes.push(ob);
@@ -161,6 +162,7 @@ export class DataLoader {
             filters.f.obs[ob.f].indexes.push(ob);
             filters.t.obs[ob.t].indexes.push(ob);
             filters.x.obs[ob.x].indexes.push(ob);
+            filters.v.obs[ob.v].indexes.push(ob);
         }
 
         //Initialize the data object

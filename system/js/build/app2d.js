@@ -589,6 +589,9 @@ var DataLoader = (function () {
                 if (!filters.x.obs[ob.x]) {
                     filters.x.obs[ob.x] = { c: 1, indexes: [] };
                 }
+                if (!filters.v.obs[ob.v]) {
+                    filters.v.obs[ob.v] = { c: 1, indexes: [] };
+                }
                 filters.s.obs[ob.s].indexes.push(ob);
                 filters.i.obs[ob.i].indexes.push(ob);
                 filters.r.obs[ob.r].indexes.push(ob);
@@ -598,6 +601,7 @@ var DataLoader = (function () {
                 filters.f.obs[ob.f].indexes.push(ob);
                 filters.t.obs[ob.t].indexes.push(ob);
                 filters.x.obs[ob.x].indexes.push(ob);
+                filters.v.obs[ob.v].indexes.push(ob);
             }
 
             //Initialize the data object
