@@ -1,4 +1,5 @@
 var scene = require('../core/vessels-3d.js'),
+    ves2d = require('../core/vessels-2d.js'),
     __s__ = require('../utils/js-helpers.js'),
     __d__ = require('../utils/dom-utilities.js'),
     colorWidget = require('../colors/colors-widget.js'),
@@ -10,9 +11,10 @@ var node = document.getElementById("app-3d"),
     infoNode = document.getElementById("info-window"),
     dropColors = document.getElementById("dropColors"),
     launchColorsWidget = document.getElementById("launchColorsWidget"),
+    btnLaunchPDF = document.getElementById("btnLaunchPDF"),
 
     queryParams = __s__.getQueryParams(),
-    app3d, data,
+    app3d, app2d,
     controlsControl;
 
 controlsControl = {
@@ -27,7 +29,7 @@ controlsControl = {
     openBayInfo: null,
     closeBayInfo: null,
     bayInfo: null,
-    bayInfoTable: null,
+    bayInfoIframe: null,
     baySelected: "",
     shipHouseSpace: 20.5,
     isExpanded: false,
@@ -129,7 +131,7 @@ controlsControl = {
         me.openBayInfo = document.getElementById("open-panel");
         me.closeBayInfo = document.getElementById("close-panel");
         me.bayInfo = document.getElementById("bay-panel");
-        me.bayInfoTable = document.getElementById("bay-table-container");
+        me.bayInfoIframe = document.getElementById("bay-iframe-container");
         
         __d__.addEventLnr(me.openBayInfo, "click", me.showBayInfo);
         __d__.addEventLnr(me.closeBayInfo, "click", me.showBayInfo);
@@ -353,129 +355,6 @@ controlsControl = {
             g3Bays = app3d.renderer3d.g3Bays,
             shipHouse = app3d.renderer3d.shipHouse;
         
-        function generateTable(bayToAnimate) {
-            var keyCell, keyTier, iBaseBay, cell, ob, iEvenBay,
-                tableBase, tableExtraBase, cells, tiers, maxCell, tiersAcc = {},
-                sBay, sExtraBay, isEven = false,
-                j, lenJ, k, dat, htmlArr,
-                htmlTable, htmlRow, htmlCell;
-                
-            function createThTable() {
-                var htmlRow = document.createElement("tr");
-                for (k = 0; k <= maxCell; k += 1) {
-                    dat = __s__.pad(k, 2);
-                    htmlCell = document.createElement("th");
-                    htmlCell.innerHTML = dat;
-                    k % 2 === 0 ?
-                            htmlRow.appendChild(htmlCell) :
-                            htmlRow.insertBefore(htmlCell, htmlRow.firstChild);
-                }
-                htmlRow.insertBefore(document.createElement("th"), htmlRow.firstChild);
-                htmlRow.appendChild(document.createElement("th"));
-                return htmlRow;
-            }
-            
-            /*
-            iBaseBay = (bayToAnimate - 1) % 4 === 0 ? bayToAnimate : bayToAnimate - 2;*/
-            iBaseBay = bayToAnimate;
-            if (iBaseBay % 2 === 0) { isEven = true; iBaseBay -= 1;}
-
-            iEvenBay = bayToAnimate - 1;
-            if (!g3Bays["b" + __s__.pad(iEvenBay, 3)]) { iEvenBay += 2; }
-            if (!g3Bays["b" + __s__.pad(iEvenBay, 3)]) { iEvenBay = 0; }
-            
-            sBay = __s__.pad(iBaseBay, 3);
-            sExtraBay = __s__.pad(bayToAnimate, 3);
-            tableBase = JSON.parse(JSON.stringify(dataStructured[sBay])); //deep copy
-            
-            if (iBaseBay !== bayToAnimate) { //Mid bay like 3, 7, 11,...
-                tableExtraBase = JSON.parse(JSON.stringify(dataStructured[sExtraBay])); //deep copy
-                //Remove
-                for(keyCell in tableBase.cells) {
-                    cell = tableBase.cells[keyCell];
-                    for(keyTier in cell.tiers) {
-                        ob = cell.tiers[keyTier];
-                        if (ob.p.indexOf(sBay) === 0) {
-                            tableBase.cells[keyCell].tiers[keyTier] = null;
-                        }
-                    }
-                }
-                //Replace 
-                for(keyCell in tableExtraBase.cells) {
-                    cell = tableExtraBase.cells[keyCell];
-                    for(keyTier in cell.tiers) {
-                        ob = cell.tiers[keyTier];
-                        if (ob.p.indexOf(sExtraBay) === 0) {
-                            if(!tableBase.cells[keyCell]) { tableBase.cells[keyCell] = { tiers: {} }; }
-                            tableBase.cells[keyCell].tiers[keyTier] = ob;
-                        }
-                    }
-                }                    
-            }
-            
-            //Find all tiers
-            for(keyCell in tableBase.cells) {
-                for(keyTier in tableBase.cells[keyCell].tiers) {
-                    if (!tiersAcc[keyTier]) { tiersAcc[keyTier] = 1; }
-                }
-            }                
-
-            cells = __s__.objKeysToArray(tableBase.cells, true);
-            tiers = __s__.objKeysToArray(tiersAcc, true);
-            maxCell = Number(cells[cells.length - 1]);
-            
-            htmlTable = document.createElement("table");
-            htmlTable.setAttribute("align", "center");
-            htmlRow = createThTable();
-            htmlTable.appendChild(htmlRow);
-            
-            for (j = tiers.length - 1; j >= 0; j -= 1) {
-                htmlRow = document.createElement("tr");
-                htmlRow.setAttribute("data-tier", tiers[j]);
-                htmlTable.appendChild(htmlRow);
-                
-                for (k = 0; k <= maxCell; k += 1) {
-                    dat = __s__.pad(k, 2);
-                    htmlCell = document.createElement("td");
-                    htmlCell.id = "td_" + dat + "_" + tiers[j];
-                    if(tableBase.cells[dat] && tableBase.cells[dat].tiers[tiers[j]]) {
-                        ob = tableBase.cells[dat].tiers[tiers[j]];
-                        htmlArr = [];
-                        htmlArr.push(ob.s ? "F <br />" : "e <br />");
-                        htmlArr.push("<span class='dest' style='background:" + filters.d.obs[ob.d].color + "'>" + ob.d + "</span><br />");
-                        htmlArr.push("<span class='haz " + (ob.w ? "isHaz" : "") + "'>" + (ob.w ? "HAZARDOUS" : "") + "</span>");
-                        htmlArr.push("<span class='cont'>" + ob.c.substr(0, 4) + "<br />" + ob.c.substr(4) + "</span> ");
-                        htmlArr.push("<span class='opr' style='background:" + filters.o.obs[ob.o].color + "'>" + ob.o + "</span><br />");
-                        htmlArr.push("<span class='iso'>" + ob.i + "</span><br />");
-                        htmlArr.push("<span class='mt'>" + ob.m + "MT</span> ");
-                        htmlCell.innerHTML = htmlArr.join("");
-                    } else {
-                        htmlCell.innerHTML = "&nbsp;";
-                        htmlCell.className = "empty";
-                    }
-                    k % 2 === 0 ?
-                        htmlRow.appendChild(htmlCell) :
-                        htmlRow.insertBefore(htmlCell, htmlRow.firstChild);
-                }
-                
-                htmlCell = document.createElement("td");
-                htmlCell.innerHTML = tiers[j];
-                htmlCell.className = "th";
-                htmlRow.insertBefore(htmlCell, htmlRow.firstChild);    
-                                
-                htmlCell = document.createElement("td");
-                htmlCell.innerHTML = tiers[j];
-                htmlCell.className = "th";
-                htmlRow.appendChild(htmlCell);                   
-            }
-            
-            htmlRow = createThTable();
-            htmlTable.appendChild(htmlRow);
-            
-            me.bayInfoTable.innerHTML = "";
-            me.bayInfoTable.appendChild(htmlTable);                
-        }
-        
         function animateBays(bayToAnimate, timing, addC, delC, bayY) {
             var key, i, bayM, bayMeven, iEvenBay, addToShipHouse,
                 bayGroup;
@@ -583,7 +462,6 @@ controlsControl = {
         separateBay(!sBay ? "" : sBay);
         if(!!sBay) {
             me.dropAddHouse.setAttribute("disabled", "disabled"); 
-            generateTable(iBay);
         } else {
             me.dropAddHouse.removeAttribute("disabled"); 
         }
@@ -594,14 +472,18 @@ controlsControl = {
     showBayInfo: function(ev) {
         
         var show = ev.target.id === "open-panel",
-            me = controlsControl;
+            me = controlsControl,
+            fileToLoad;
             
         if (show) {
             me.bayInfo.style.display = "block";
             app3d.pauseRendering();
+            fileToLoad = queryParams.json.replace("..%2Fget3DVesselData.php%3Ffiletoload%3D", "filetoload=");
+            me.bayInfoIframe.src = window.bayviewRoute + "?" + fileToLoad + "&from3d=true";
         } else {
             me.bayInfo.style.display = "none";
             app3d.resumeRendering();
+            me.bayInfoIframe.src = "";
         }
     },
 
@@ -921,7 +803,7 @@ controlsControl = {
         }
     },
 
-    disableRenderOnColorWidget(isShown) {
+    disableRendering(isShown) {
         app3d.toggleRendering(!isShown);
         app3d.renderer3d.controls.enabled = !isShown;
     },
@@ -971,13 +853,15 @@ app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA)
         function(loadedData) {
             let renderer3d = app3d.renderer3d, clrs,
                 modelsFactory = app3d.modelsFactory,
+                data,
                 maxDepth, maxDepthHalf;
 
             //Title
             app3d.updateHtmlTitle(loadedData.VesselName, loadedData.PlaceOfDeparture, loadedData.VoyageNumber);
             
             //Process data
-            app3d.data = app3d.loadData(loadedData);
+            data = app3d.loadData(loadedData);
+            app3d.data = data;
 
             //Generate 3D objects
             //Pass 1. Map to bays & models
@@ -991,7 +875,7 @@ app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA)
 
             //Initialize the colorsWidget
             clrs = new colorWidget.ColorsWidget(launchColorsWidget, app3d.data.filters, dropColors);
-            clrs.onToggled = controlsControl.disableRenderOnColorWidget;
+            clrs.onToggled = controlsControl.disableRendering;
             clrs.onSaved = controlsControl.updateSceneAfterCustomColors;
             clrs.postUrl = window.writeColorsRoute;
             if (window.userSettings) { clrs.mergeColorSettings(window.userSettings); }
@@ -1016,6 +900,19 @@ app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA)
             renderer3d.controls.target.z = maxDepthHalf;
             controlsControl.initialCameraPosition.targetZ = maxDepthHalf;
 
+            //Initialize the generatePDF functionality
+            app2d = new ves2d.VesselsApp2D(btnLaunchPDF);
+            app2d.data = data;
+            app2d.applyColorsFilter(app2d.data.filters); 
+
+            app2d.setTitle(loadedData.VesselName, loadedData.PlaceOfDeparture, loadedData.VoyageNumber);
+            app2d.setMetaData(loadedData.VesselName, loadedData.VesselCallSign, loadedData.Sender, loadedData.Recipient, loadedData.PlaceOfDeparture, loadedData.VoyageNumber, loadedData.FooterLeft, loadedData.FooterRight)
+            
+            app2d.postUrl = window.generatePdfRoute;
+            app2d.onToggled = controlsControl.disableRendering;
+            
+            window.appVessels2D = app2d;
+            
         }, function(msg) {
             app3d._node.loadingDiv.setMessage(msg, true);
             app3d._node.loadingDiv.updateLoader(0.0, 1.0);

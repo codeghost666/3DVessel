@@ -37,11 +37,10 @@ app2d.loadUrl(queryParams.json, i18labels.LOADING_DATA)
             clrs = new colorWidget.ColorsWidget(null, app2d.data.filters, null);
             if (window.userSettings) { clrs.mergeColorSettings(window.userSettings); }
             
-            app2d.applyColorsFilter(app2d.data.filters);         
-
             //--End: This is needed for stand-alone functioning
 
             //app2d
+            app2d.applyColorsFilter(app2d.data.filters);         
             app2d.setTitle(loadedData.VesselName, loadedData.PlaceOfDeparture, loadedData.VoyageNumber);
             app2d.setMetaData(loadedData.VesselName, loadedData.VesselCallSign, loadedData.Sender, loadedData.Recipient, loadedData.PlaceOfDeparture, loadedData.VoyageNumber, loadedData.FooterLeft, loadedData.FooterRight)
             app2d.postUrl = window.generatePdfRoute;

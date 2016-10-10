@@ -42,11 +42,10 @@ app2d.loadUrl(queryParams.json, i18labels.LOADING_DATA).then(function (loadedDat
         clrs.mergeColorSettings(window.userSettings);
     }
 
-    app2d.applyColorsFilter(app2d.data.filters);
-
     //--End: This is needed for stand-alone functioning
 
     //app2d
+    app2d.applyColorsFilter(app2d.data.filters);
     app2d.setTitle(loadedData.VesselName, loadedData.PlaceOfDeparture, loadedData.VoyageNumber);
     app2d.setMetaData(loadedData.VesselName, loadedData.VesselCallSign, loadedData.Sender, loadedData.Recipient, loadedData.PlaceOfDeparture, loadedData.VoyageNumber, loadedData.FooterLeft, loadedData.FooterRight);
     app2d.postUrl = window.generatePdfRoute;
@@ -1076,7 +1075,7 @@ var VesselsApp2D = (function () {
 
             arrLis = [];
             arrLis.push("<option value='1'>" + i18labels.PRINTOPTS_PERROW + ": 1</option>");
-            for (k = 2; k < 16; k += 1) {
+            for (k = 2; k < 9; k += 1) {
                 bayW = Math.round(this.width / (k * (1 + optsPaddingW)));
                 if (bayW < res * 0.3) {
                     break;
@@ -1600,6 +1599,7 @@ var VesselsApp2D = (function () {
                     isLndscp = undefined,
                     j = undefined,
                     lenJ = undefined,
+                    closeBtn = undefined,
                     ajaxError = function ajaxError(err) {
                     console.error(err);
                     if (divProgress) {
@@ -1653,7 +1653,11 @@ var VesselsApp2D = (function () {
                 reqUpload.done(function (result) {
                     console.log(result);
                     if (result.download) {
-                        divProgress.innerHTML = "<a href='" + result.download + "' target='_blank'>Download PDF</a>";
+                        divProgress.innerHTML = "<a href='" + result.download + "' target='_blank'>Download PDF</a><br /><br />";
+                        closeBtn = document.createElement("button");
+                        closeBtn.innerHTML = "Close this window";
+                        __d__.addEventLnr(closeBtn, "click", me.close.bind(me));
+                        divProgress.appendChild(closeBtn);
                     } else {
                         divProgress.innerHTML = "An error has ocurred.";
                     }

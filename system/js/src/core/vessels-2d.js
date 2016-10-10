@@ -191,7 +191,7 @@ export class VesselsApp2D {
 
         arrLis = [];
         arrLis.push("<option value='1'>" + i18labels.PRINTOPTS_PERROW + ": 1</option>");
-        for(k = 2; k < 16; k +=1) {
+        for(k = 2; k < 9; k +=1) {
             bayW = Math.round(this.width / (k * (1 + optsPaddingW)));
             if (bayW < res * 0.3) { break; }
             arrLis.push("<option data-w='" + bayW + "' value='" + k + "'>" + i18labels.PRINTOPTS_PERROW + ": " + k + "</option>");
@@ -626,7 +626,7 @@ export class VesselsApp2D {
 
         function sendPagesToServer() {
             let postUrl = me.postUrl, reqUpload, json, isLndscp,
-                j, lenJ,
+                j, lenJ, closeBtn,
                 ajaxError = (err) => { 
                     console.error(err);
                     if (divProgress) { divProgress.innerHTML = "An error has ocurred."; }  
@@ -678,7 +678,11 @@ export class VesselsApp2D {
             reqUpload.done(function (result) {
                 console.log(result);
                 if (result.download) {
-                    divProgress.innerHTML = "<a href='" + result.download + "' target='_blank'>Download PDF</a>";
+                    divProgress.innerHTML = "<a href='" + result.download + "' target='_blank'>Download PDF</a><br /><br />";
+                    closeBtn = document.createElement("button");
+                    closeBtn.innerHTML = "Close this window";
+                    __d__.addEventLnr(closeBtn, "click", me.close.bind(me));
+                    divProgress.appendChild(closeBtn);
                 } else {
                     divProgress.innerHTML = "An error has ocurred.";                    
                 }

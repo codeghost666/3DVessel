@@ -61,6 +61,9 @@
                 <ul id="tableColors"></ul>
                 <button id="launchColorsWidget" class="launchColorsWidget">Customize colors</button>
             </div>
+            <div class="generate-pdf">
+                <button id="btnLaunchPDF" class="btnLaunchPDF">PRINT Full Cargo View</button>
+            </div>
             <div class="instructions">
             Press [ESC] to return to the initial view.
             </div>            
@@ -81,6 +84,7 @@
 <?php include 'php/readColors.php'; ?>
 
         <script>
+            var bayviewRoute = "../bayview.php";
             var generatePdfRoute = "php/generatePDF.php";
             var writeColorsRoute = "php/writeColors.php";
             var userSettings = { 
@@ -96,6 +100,9 @@
         <script src="system/lib/js/colorpicker/min/one-color-min.js"></script>
         <script src="system/lib/js/colorpicker/min/colorjoe-min.js"></script>
         <script src="system/js/build/min/libraries-for-app3d-min.js"></script>
+        <script src="system/lib/js/underscore/underscore-min.js"></script>
+        <script src="system/lib/js/jquery/jquery-3.1.1.min.js"></script>
+        <script src="system/lib/js/jquery/upload-progress.js"></script>        
         <script src="system/js/build/app3d.js"></script>
 
 	</body>
