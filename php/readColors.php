@@ -26,6 +26,12 @@ function readColors() {
 			$response[$looped[$key]['attribute_key'].".".$looped[$key]['attribute_value']] = $looped[$key]['hex_color'];
 		}
 	}
+
+	echo "<!--";
+	echo $username;
+	echo $sql_results;
+	echo json_encode($response);
+	echo "-->";	
 	return $response;
 }
 
