@@ -103,7 +103,7 @@ export class ColorsWidget {
         if (!jsonObj.colors) { console.warn(i18labels.NO_COLOR_SETTINGS); return; }
 
         for (key in jsonObj.colors) {
-            arr = key.split(String.fromCharCode(240));
+            arr = key.split("___");
 
             if (!filters[arr[0]] || !filters[arr[0]].obs.hasOwnProperty(arr[1])) { continue; }
 
@@ -166,9 +166,9 @@ export class ColorsWidget {
         orderedKeys = _.keys(currFilter.obs).sort();
         for(m = 0, lenM = orderedKeys.length; m < lenM; m += 1) {
             key = orderedKeys[m];
-            currColor = me._node.colorsTemp[filterKey + String.fromCharCode(240) + key ] || currFilter.obs[key].color;
+            currColor = me._node.colorsTemp[filterKey + "___" + key ] || currFilter.obs[key].color;
             text = (filterKey === "h" ? me._makeHeightVisible(key) : key);
-            arr.push("<li data-color='" + currColor + "' id='liColor_" + filterKey + String.fromCharCode(240) + key + "'><span style='background:" +
+            arr.push("<li data-color='" + currColor + "' id='liColor_" + filterKey + "___" + key + "'><span style='background:" +
                 currColor + "'> </span>" + 
                 (currFilter.tf ? tfLabels[key] : text) + "&nbsp;</li>");
         }
@@ -227,7 +227,7 @@ export class ColorsWidget {
             req;
 
         for (key in colorsTemp) {
-            arr = key.split(String.fromCharCode(240));
+            arr = key.split("___");
             if (arr.length !== 2) { continue; }
 
             color = colorsTemp[key];

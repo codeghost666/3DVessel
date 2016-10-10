@@ -100,7 +100,7 @@ $sql_results ="SELECT attribute_key, attribute_value, hex_color FROM userbase.vi
 //ALTER TABLE foobar_data MODIFY COLUMN col VARCHAR(255) NOT NULL DEFAULT '{}';
 $datagroup = dbase::globalQueryPlus($sql_results,$conn,2);
 
-$joiner = strval(chr(240));
+$joiner = "___";
 $response;
 
 if($datagroup[1]>0){

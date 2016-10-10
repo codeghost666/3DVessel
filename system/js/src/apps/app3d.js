@@ -850,7 +850,7 @@ controlsControl = {
         app3d.data.filters = filters;
 
         for (key in changes) {
-            arr = key.split(String.fromCharCode(240));
+            arr = key.split("___");
             if (arr.length !== 2) { continue; }
 
             fltr = filters[arr[0]].obs[arr[1]]; 

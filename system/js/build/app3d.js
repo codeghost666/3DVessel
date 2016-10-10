@@ -957,7 +957,7 @@ controlsControl = {
         app3d.data.filters = filters;
 
         for (key in changes) {
-            arr = key.split(String.fromCharCode(240));
+            arr = key.split("___");
             if (arr.length !== 2) {
                 continue;
             }
@@ -1209,7 +1209,7 @@ var ColorsWidget = (function () {
             }
 
             for (key in jsonObj.colors) {
-                arr = key.split(String.fromCharCode(240));
+                arr = key.split("___");
 
                 if (!filters[arr[0]] || !filters[arr[0]].obs.hasOwnProperty(arr[1])) {
                     continue;
@@ -1291,9 +1291,9 @@ var ColorsWidget = (function () {
             orderedKeys = _.keys(currFilter.obs).sort();
             for (m = 0, lenM = orderedKeys.length; m < lenM; m += 1) {
                 key = orderedKeys[m];
-                currColor = me._node.colorsTemp[filterKey + String.fromCharCode(240) + key] || currFilter.obs[key].color;
+                currColor = me._node.colorsTemp[filterKey + "___" + key] || currFilter.obs[key].color;
                 text = filterKey === "h" ? me._makeHeightVisible(key) : key;
-                arr.push("<li data-color='" + currColor + "' id='liColor_" + filterKey + String.fromCharCode(240) + key + "'><span style='background:" + currColor + "'> </span>" + (currFilter.tf ? tfLabels[key] : text) + "&nbsp;</li>");
+                arr.push("<li data-color='" + currColor + "' id='liColor_" + filterKey + "___" + key + "'><span style='background:" + currColor + "'> </span>" + (currFilter.tf ? tfLabels[key] : text) + "&nbsp;</li>");
             }
 
             this._node.ulColors.innerHTML = arr.join("");
@@ -1361,7 +1361,7 @@ var ColorsWidget = (function () {
                 req = undefined;
 
             for (key in colorsTemp) {
-                arr = key.split(String.fromCharCode(240));
+                arr = key.split("___");
                 if (arr.length !== 2) {
                     continue;
                 }
