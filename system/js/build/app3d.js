@@ -215,7 +215,7 @@ controlsControl = {
         var hNum = Number(h),
             hInt = Math.floor(hNum),
             hDec = (hNum - hInt) * 1.2;
-        return hInt + hDec;
+        return String(hInt + hDec).replace(".", "'") + "\"";
     },
 
     prepareFilter: function prepareFilter(e) {
@@ -957,7 +957,7 @@ controlsControl = {
         app3d.data.filters = filters;
 
         for (key in changes) {
-            arr = key.split(".");
+            arr = key.split(String.fromCharCode(240));
             if (arr.length !== 2) {
                 continue;
             }
@@ -1196,7 +1196,7 @@ var ColorsWidget = (function () {
             }
 
             for (key in jsonObj.colors) {
-                arr = key.split(".");
+                arr = key.split(String.fromCharCode(240));
 
                 if (!filters[arr[0]] || !filters[arr[0]].obs.hasOwnProperty(arr[1])) {
                     continue;
@@ -1256,7 +1256,7 @@ var ColorsWidget = (function () {
             var hNum = Number(h),
                 hInt = Math.floor(hNum),
                 hDec = (hNum - hInt) * 1.2;
-            return hInt + hDec;
+            return String(hInt + hDec).replace(".", "'") + "\"";
         }
     }, {
         key: 'dropFilterChanged',
@@ -1273,9 +1273,9 @@ var ColorsWidget = (function () {
                 text = undefined;
 
             for (key in currFilter.obs) {
-                currColor = me._node.colorsTemp[filterKey + "." + key] || currFilter.obs[key].color;
+                currColor = me._node.colorsTemp[filterKey + String.fromCharCode(240) + key] || currFilter.obs[key].color;
                 text = filterKey === "h" ? me._makeHeightVisible(key) : key;
-                arr.push("<li data-color='" + currColor + "' id='liColor_" + filterKey + "." + key + "'><span style='background:" + currColor + "'> </span>" + (currFilter.tf ? tfLabels[key] : text) + "&nbsp;</li>");
+                arr.push("<li data-color='" + currColor + "' id='liColor_" + filterKey + String.fromCharCode(240) + key + "'><span style='background:" + currColor + "'> </span>" + (currFilter.tf ? tfLabels[key] : text) + "&nbsp;</li>");
             }
 
             this._node.ulColors.innerHTML = arr.join("");
@@ -1292,9 +1292,10 @@ var ColorsWidget = (function () {
             if (!this._node.colorPickerJoe) {
                 this._node.colorPickerJoe = colorjoe.rgb(this._node.colorPickerDiv, firstLi.getAttribute("data-color"));
                 this._node.colorPickerJoe.on("change", function (color) {
+                    var optionValue = me._currentOption.id.replace("liColor_", "");
                     me._currentOption.setAttribute("data-color", color.hex());
                     me._currentOption.getElementsByTagName("SPAN")[0].style.background = color.hex();
-                    me._node.colorsTemp[me._currentOption.id.replace("liColor_", "")] = color.hex();
+                    me._node.colorsTemp[optionValue] = color.hex();
                 });
             } else {
                 this._node.colorPickerJoe.set(firstLi.getAttribute("data-color"));
@@ -1342,7 +1343,7 @@ var ColorsWidget = (function () {
                 req = undefined;
 
             for (key in colorsTemp) {
-                arr = key.split(".");
+                arr = key.split(String.fromCharCode(240));
                 if (arr.length !== 2) {
                     continue;
                 }
@@ -1365,7 +1366,7 @@ var ColorsWidget = (function () {
                 this.onSaved(filters, colorsTemp, filtersCustomized);
             }
 
-            if (!this.postUrl) {
+            if (!this.postUrl || dataToPost.length === 0) {
                 return;
             }
 

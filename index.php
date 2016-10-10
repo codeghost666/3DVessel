@@ -104,7 +104,7 @@ if($datagroup[1]>0){
 	$looped = dbase::loop_to_array($datagroup[0]);
 	
 	foreach($looped as $key=>$value){
-		$response[$looped[$key]['attribute_key'].".".$looped[$key]['attribute_value']] = $looped[$key]['hex_color'];
+		$response[$looped[$key]['attribute_key']. chr(240) .$looped[$key]['attribute_value']] = $looped[$key]['hex_color'];
 	}
 }
 /* *************************************************************** */ ?>

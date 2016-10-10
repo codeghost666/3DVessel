@@ -98,7 +98,7 @@ export class ColorsWidget {
         if (!jsonObj.colors) { console.warn(i18labels.NO_COLOR_SETTINGS); return; }
 
         for (key in jsonObj.colors) {
-            arr = key.split(".");
+            arr = key.split(String.fromCharCode(240));
 
             if (!filters[arr[0]] || !filters[arr[0]].obs.hasOwnProperty(arr[1])) { continue; }
 
@@ -146,7 +146,7 @@ export class ColorsWidget {
         let hNum = Number(h),
             hInt = Math.floor(hNum),
             hDec = (hNum - hInt) * 1.2;
-            return hInt + hDec;
+            return String(hInt + hDec).replace(".", "'") + "\"";
     }
 
     dropFilterChanged () {
@@ -158,9 +158,9 @@ export class ColorsWidget {
             lis, firstLi, currColor, text;
 
         for (key in currFilter.obs) {
-            currColor = me._node.colorsTemp[filterKey + "." + key ] || currFilter.obs[key].color;
+            currColor = me._node.colorsTemp[filterKey + String.fromCharCode(240) + key ] || currFilter.obs[key].color;
             text = (filterKey === "h" ? me._makeHeightVisible(key) : key);
-            arr.push("<li data-color='" + currColor + "' id='liColor_" + filterKey + "." + key + "'><span style='background:" +
+            arr.push("<li data-color='" + currColor + "' id='liColor_" + filterKey + String.fromCharCode(240) + key + "'><span style='background:" +
                 currColor + "'> </span>" + 
                 (currFilter.tf ? tfLabels[key] : text) + "&nbsp;</li>");
         }
@@ -177,9 +177,10 @@ export class ColorsWidget {
         if (!this._node.colorPickerJoe) {
             this._node.colorPickerJoe = colorjoe.rgb(this._node.colorPickerDiv, firstLi.getAttribute("data-color"));
             this._node.colorPickerJoe.on("change", function(color) {
+                let optionValue = me._currentOption.id.replace("liColor_", "");
                 me._currentOption.setAttribute("data-color", color.hex());
                 me._currentOption.getElementsByTagName("SPAN")[0].style.background = color.hex();
-                me._node.colorsTemp[me._currentOption.id.replace("liColor_", "")] = color.hex();
+                me._node.colorsTemp[optionValue] = color.hex();
             });
         } else {
             this._node.colorPickerJoe.set(firstLi.getAttribute("data-color"));
@@ -218,7 +219,7 @@ export class ColorsWidget {
             req;
 
         for (key in colorsTemp) {
-            arr = key.split(".");
+            arr = key.split(String.fromCharCode(240));
             if (arr.length !== 2) { continue; }
 
             color = colorsTemp[key];
@@ -237,7 +238,7 @@ export class ColorsWidget {
             this.onSaved(filters, colorsTemp, filtersCustomized);
         }
 
-        if (!this.postUrl) { return; }
+        if (!this.postUrl || dataToPost.length === 0) { return; }
 
         req = new XMLHttpRequest();
         req.open('POST', this.postUrl);

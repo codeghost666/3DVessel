@@ -193,7 +193,7 @@ controlsControl = {
         let hNum = Number(h),
             hInt = Math.floor(hNum),
             hDec = (hNum - hInt) * 1.2;
-            return hInt + hDec;
+            return String(hInt + hDec).replace(".", "'") + "\"";
     },
 
     prepareFilter: function (e) {
@@ -850,7 +850,7 @@ controlsControl = {
         app3d.data.filters = filters;
 
         for (key in changes) {
-            arr = key.split(".");
+            arr = key.split(String.fromCharCode(240));
             if (arr.length !== 2) { continue; }
 
             fltr = filters[arr[0]].obs[arr[1]]; 
