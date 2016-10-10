@@ -81,9 +81,10 @@
 <?php include 'php/readColors.php'; ?>
 
         <script>
+            var generatePdfRoute = "php/generatePDF.php";
             var writeColorsRoute = "php/writeColors.php";
             var userSettings = { 
-                    colors: <?php echo json_encode($response) ?>
+                    colors: <?php echo json_encode($responseColors) ?>
                 };
 
         </script>

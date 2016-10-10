@@ -1,7 +1,7 @@
 <?php
 
 //Data and Username
-require_once("local_config.php");
+require_once("../../local_config.php");
 require_once(APP_INC_PATH."bootstrap_frontend.php");
 sessionsClass::site_protection(true,true,true,false,false);
 

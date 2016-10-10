@@ -1,6 +1,6 @@
 <?php
 
-require_once("local_config.php");
+require_once("../../local_config.php");
 require_once(APP_INC_PATH."bootstrap_frontend.php");
 sessionsClass::site_protection(true,true,true,false,false);
 
@@ -21,7 +21,7 @@ if($datagroup[1]>0){
 	$looped = dbase::loop_to_array($datagroup[0]);
 	
 	foreach($looped as $key=>$value){
-		$response[$looped[$key]['attribute_key'].".".$looped[$key]['attribute_value']] = $looped[$key]['hex_color'];
+		$responseColors[$looped[$key]['attribute_key'].".".$looped[$key]['attribute_value']] = $looped[$key]['hex_color'];
 	}
 }
 ?>
