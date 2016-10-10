@@ -101,6 +101,8 @@ $sql_results ="SELECT attribute_key, attribute_value, hex_color FROM userbase.vi
 $datagroup = dbase::globalQueryPlus($sql_results,$conn,2);
 
 $joiner = strval(chr(240));
+$response;
+
 if($datagroup[1]>0){
 	$looped = dbase::loop_to_array($datagroup[0]);
 	
