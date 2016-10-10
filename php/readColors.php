@@ -1,13 +1,15 @@
 <?php
-echo "readColors.php init";
+echo "<!-- readColors.php init -->\n";
+
+require_once("../../local_config.php");
+echo "<!-- " . APP_INC_PATH . " -->\n";
+require_once(APP_INC_PATH."bootstrap_frontend.php");
+sessionsClass::site_protection(true,true,true,false,false);
+echo "<!-- read includes -->\n";
 
 function readColors() {
-	echo "readColors function";
+	echo "<!-- readColors-function -->\n";
 	$response;
-	require_once("/../../local_config.php");
-	require_once(APP_INC_PATH."bootstrap_frontend.php");
-	sessionsClass::site_protection(true,true,true,false,false);
-	echo "read includes";
 
 	$userid = dbase::globalMagic($_SESSION['userid']);
 
@@ -15,11 +17,11 @@ function readColors() {
 	if ($data !== false){
 		$username = dbase::globalMagic($data['username']);
 	}
-	echo "<!--" . $username . "-->";
+	echo "<!--" . $username . "-->\n";
 
 	//Query DB for username
 	$sql_results ="SELECT attribute_key, attribute_value, hex_color FROM userbase.viewer_user_colors WHERE username = '".$username."';";
-	echo "<!--" . $sql_results. "-->";
+	echo "<!--" . $sql_results. "-->\n";
 
 	//ALTER TABLE foobar_data MODIFY COLUMN col VARCHAR(255) NOT NULL DEFAULT '{}';
 	$datagroup = dbase::globalQueryPlus($sql_results,$conn,2);
@@ -32,7 +34,7 @@ function readColors() {
 		}
 	}
 
-	echo "<!--" . json_encode($response. "-->");
+	echo "<!--" . json_encode($response. "-->\n");
 	return $response;
 }
 
