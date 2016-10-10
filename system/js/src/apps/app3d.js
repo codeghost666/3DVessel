@@ -41,7 +41,7 @@ controlsControl = {
     init: function (){
         let ctrlColors = dropColors,
             ctrlFilter = document.getElementById("dropFilter"),
-            j, opt, me = controlsControl,
+            j, opt, me = controlsControl, k, lenK,
             filters = app3d.data.filters;
 
         me.dropFilterValue = document.getElementById("dropFilterValue"); 
@@ -56,8 +56,13 @@ controlsControl = {
         opt = document.createElement("option");
         opt.value = ""; opt.innerHTML = "None";
         ctrlFilter.appendChild(opt);
-        
-        for(j in filters) {                
+
+        let orderedNames = [];
+        for(j in filters) { orderedNames.push({name: filters[j].name, key: j }); }
+        orderedNames = orderedNames.sort((a, b) => a.name >= b.name ? 1 : -1 );
+
+        for (k = 0, lenK = orderedNames.length; k < lenK; k += 1) {
+            j = orderedNames[k].key;
             opt = document.createElement("option");
             opt.value = j; opt.innerHTML = filters[j].name;
             ctrlFilter.appendChild(opt);
@@ -65,7 +70,7 @@ controlsControl = {
             opt = document.createElement("option");
             opt.value = j; opt.innerHTML = filters[j].name;
             ctrlColors.appendChild(opt);
-        }
+        }       
         ctrlColors.value = "i";
         
         __d__.addEventLnr(ctrlFilter, "change", me.prepareFilter);
@@ -215,8 +220,9 @@ controlsControl = {
             opts.push("<option value='1'>yes</option>"); 
             opts.push("<option value='0'>no</option>");
         } else {
-            for(key in currentFilter.obs) {
-                opts.push("<option value='" + key + "'>" + key + "</option>");
+            let orderedKeys = _.keys(currentFilter.obs).sort(), m, lenM;
+            for(m = 0, lenM = orderedKeys.length; m < lenM; m += 1) {
+                opts.push("<option value='" + orderedKeys[m] + "'>" + orderedKeys[m] + "</option>");
             }
         }
         me.dropFilterValue.innerHTML = opts.join("");
@@ -603,13 +609,20 @@ controlsControl = {
     showColorsTable: function (attr) {
         var tableColors = document.getElementById("tableColors"),
             liColors = [], key, attr, isTf, val,
-            filters = app3d.data.filters;
-            
-        isTf = filters[attr].tf;
-        for (key in filters[attr].obs) {
-            val = filters[attr].obs[key];
+            filters = app3d.data.filters,
+            currentFilter = filters[attr],
+            orderedKeys, m, lenM;
+
+        isTf = currentFilter.tf;
+        orderedKeys = !isTf ? _.keys(currentFilter.obs).sort() : ["1", "0"];
+
+        for(m = 0, lenM = orderedKeys.length; m < lenM; m += 1) {
+            key = orderedKeys[m];
+            val = currentFilter.obs[key];
             if (isTf) {
-                liColors.push("<li><span style='background:" + val.color + "'></span>" + (key==="1" ? "yes" : "no") + "</li>");
+                if (val) {
+                    liColors.push("<li><span style='background:" + val.color + "'></span>" + (key==="1" ? "yes" : "no") + "</li>");
+                }
             } else {
                 liColors.push("<li><span style='background:" + val.color + "'></span>" + key + "</li>");
             }

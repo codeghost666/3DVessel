@@ -182,7 +182,7 @@ export class DataLoader {
 
         //Initialize filters
         filters = {};
-        addFilter("i", "ISO Code", false);
+        addFilter("i", "Equipment Type", false);
         addFilter("s", "Status", true);
         addFilter("r", "Is Reefer", true);
         addFilter("w", "Is Hazardous", true);

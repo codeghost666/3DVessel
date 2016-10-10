@@ -456,13 +456,13 @@ export class Renderer3D {
                     baseBay: g3Bay.iBay,
                     cbn: gbn,
                     cells : dataStructured[key].n,
-                    maxD: dataStructured[key].maxD,
-                    posLeft: Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 0), (kk) => Number(kk))),
-                    posRight: Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 1), (kk) => Number(kk)))
+                    maxD: dataStructured[key].maxD || 0,
+                    posLeft: dataStructured[key].n ? Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 0), (kk) => Number(kk))) : 0,
+                    posRight: dataStructured[key].n ? Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 1), (kk) => Number(kk))) : 0
                 };
             } else {
-                icb[gbn].posLeft = Math.max(icb[gbn].posLeft, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 0), (kk) => Number(kk))));
-                icb[gbn].posRight = Math.max(icb[gbn].posRight, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 1), (kk) => Number(kk))));
+                icb[gbn].posLeft = dataStructured[key].n ? Math.max(icb[gbn].posLeft, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 0), (kk) => Number(kk)))) : 0;
+                icb[gbn].posRight = dataStructured[key].n ? Math.max(icb[gbn].posRight, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), (k) => Number(k) % 2 === 1), (kk) => Number(kk)))) : 0;
             }
             maxBlock = gbn;
         }
@@ -578,6 +578,8 @@ export class Renderer3D {
                 g3Bay.hatchC = mesh;
             }
         }
+
+        console.log("hc-ee");
 
         this.scene.add(hatchGroup3D);
         hatchGroup3D.position.y = 1.5;

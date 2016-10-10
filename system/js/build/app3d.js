@@ -47,6 +47,8 @@ controlsControl = {
             j = undefined,
             opt = undefined,
             me = controlsControl,
+            k = undefined,
+            lenK = undefined,
             filters = app3d.data.filters;
 
         me.dropFilterValue = document.getElementById("dropFilterValue");
@@ -62,7 +64,16 @@ controlsControl = {
         opt.value = "";opt.innerHTML = "None";
         ctrlFilter.appendChild(opt);
 
+        var orderedNames = [];
         for (j in filters) {
+            orderedNames.push({ name: filters[j].name, key: j });
+        }
+        orderedNames = orderedNames.sort(function (a, b) {
+            return a.name >= b.name ? 1 : -1;
+        });
+
+        for (k = 0, lenK = orderedNames.length; k < lenK; k += 1) {
+            j = orderedNames[k].key;
             opt = document.createElement("option");
             opt.value = j;opt.innerHTML = filters[j].name;
             ctrlFilter.appendChild(opt);
@@ -233,8 +244,11 @@ controlsControl = {
             opts.push("<option value='1'>yes</option>");
             opts.push("<option value='0'>no</option>");
         } else {
-            for (key in currentFilter.obs) {
-                opts.push("<option value='" + key + "'>" + key + "</option>");
+            var orderedKeys = _.keys(currentFilter.obs).sort(),
+                m = undefined,
+                lenM = undefined;
+            for (m = 0, lenM = orderedKeys.length; m < lenM; m += 1) {
+                opts.push("<option value='" + orderedKeys[m] + "'>" + orderedKeys[m] + "</option>");
             }
         }
         me.dropFilterValue.innerHTML = opts.join("");
@@ -664,13 +678,22 @@ controlsControl = {
             attr,
             isTf,
             val,
-            filters = app3d.data.filters;
+            filters = app3d.data.filters,
+            currentFilter = filters[attr],
+            orderedKeys,
+            m,
+            lenM;
 
-        isTf = filters[attr].tf;
-        for (key in filters[attr].obs) {
-            val = filters[attr].obs[key];
+        isTf = currentFilter.tf;
+        orderedKeys = !isTf ? _.keys(currentFilter.obs).sort() : ["1", "0"];
+
+        for (m = 0, lenM = orderedKeys.length; m < lenM; m += 1) {
+            key = orderedKeys[m];
+            val = currentFilter.obs[key];
             if (isTf) {
-                liColors.push("<li><span style='background:" + val.color + "'></span>" + (key === "1" ? "yes" : "no") + "</li>");
+                if (val) {
+                    liColors.push("<li><span style='background:" + val.color + "'></span>" + (key === "1" ? "yes" : "no") + "</li>");
+                }
             } else {
                 liColors.push("<li><span style='background:" + val.color + "'></span>" + key + "</li>");
             }
@@ -1606,7 +1629,7 @@ var DataLoader = (function () {
 
             //Initialize filters
             filters = {};
-            addFilter("i", "ISO Code", false);
+            addFilter("i", "Equipment Type", false);
             addFilter("s", "Status", true);
             addFilter("r", "Is Reefer", true);
             addFilter("w", "Is Hazardous", true);
@@ -1728,7 +1751,7 @@ var PRINTOPTS_GO = "GENERATE PDF";
 exports.PRINTOPTS_GO = PRINTOPTS_GO;
 var PRINTOPTS_PERROW = "Bays per row";
 exports.PRINTOPTS_PERROW = PRINTOPTS_PERROW;
-var PRINTOPTS_COLORBY = "Color by";
+var PRINTOPTS_COLORBY = "Colour by";
 exports.PRINTOPTS_COLORBY = PRINTOPTS_COLORBY;
 var PRINTOPTS_PAGEPROGRESS = "Generating pages, please wait...";
 exports.PRINTOPTS_PAGEPROGRESS = PRINTOPTS_PAGEPROGRESS;
@@ -2377,29 +2400,29 @@ var Renderer3D = (function () {
                         baseBay: g3Bay.iBay,
                         cbn: gbn,
                         cells: dataStructured[key].n,
-                        maxD: dataStructured[key].maxD,
-                        posLeft: Number(_.max(_.filter(_(dataStructured[key].cells).keys(), function (k) {
+                        maxD: dataStructured[key].maxD || 0,
+                        posLeft: dataStructured[key].n ? Number(_.max(_.filter(_(dataStructured[key].cells).keys(), function (k) {
                             return Number(k) % 2 === 0;
                         }), function (kk) {
                             return Number(kk);
-                        })),
-                        posRight: Number(_.max(_.filter(_(dataStructured[key].cells).keys(), function (k) {
+                        })) : 0,
+                        posRight: dataStructured[key].n ? Number(_.max(_.filter(_(dataStructured[key].cells).keys(), function (k) {
                             return Number(k) % 2 === 1;
                         }), function (kk) {
                             return Number(kk);
-                        }))
+                        })) : 0
                     };
                 } else {
-                    icb[gbn].posLeft = Math.max(icb[gbn].posLeft, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), function (k) {
+                    icb[gbn].posLeft = dataStructured[key].n ? Math.max(icb[gbn].posLeft, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), function (k) {
                         return Number(k) % 2 === 0;
                     }), function (kk) {
                         return Number(kk);
-                    })));
-                    icb[gbn].posRight = Math.max(icb[gbn].posRight, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), function (k) {
+                    }))) : 0;
+                    icb[gbn].posRight = dataStructured[key].n ? Math.max(icb[gbn].posRight, Number(_.max(_.filter(_(dataStructured[key].cells).keys(), function (k) {
                         return Number(k) % 2 === 1;
                     }), function (kk) {
                         return Number(kk);
-                    })));
+                    }))) : 0;
                 }
                 maxBlock = gbn;
             }
@@ -2512,6 +2535,8 @@ var Renderer3D = (function () {
                     g3Bay.hatchC = mesh;
                 }
             }
+
+            console.log("hc-ee");
 
             this.scene.add(hatchGroup3D);
             hatchGroup3D.position.y = 1.5;

@@ -591,7 +591,7 @@ var DataLoader = (function () {
 
             //Initialize filters
             filters = {};
-            addFilter("i", "ISO Code", false);
+            addFilter("i", "Equipment Type", false);
             addFilter("s", "Status", true);
             addFilter("r", "Is Reefer", true);
             addFilter("w", "Is Hazardous", true);
@@ -713,7 +713,7 @@ var PRINTOPTS_GO = "GENERATE PDF";
 exports.PRINTOPTS_GO = PRINTOPTS_GO;
 var PRINTOPTS_PERROW = "Bays per row";
 exports.PRINTOPTS_PERROW = PRINTOPTS_PERROW;
-var PRINTOPTS_COLORBY = "Color by";
+var PRINTOPTS_COLORBY = "Colour by";
 exports.PRINTOPTS_COLORBY = PRINTOPTS_COLORBY;
 var PRINTOPTS_PAGEPROGRESS = "Generating pages, please wait...";
 exports.PRINTOPTS_PAGEPROGRESS = PRINTOPTS_PAGEPROGRESS;
