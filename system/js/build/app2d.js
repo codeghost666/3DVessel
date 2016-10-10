@@ -198,6 +198,14 @@ var ColorsWidget = (function () {
             }
         }
     }, {
+        key: '_makeHeightVisible',
+        value: function _makeHeightVisible(h) {
+            var hNum = Number(h),
+                hInt = Math.floor(hNum),
+                hDec = (hNum - hInt) * 1.2;
+            return hInt + hDec;
+        }
+    }, {
         key: 'dropFilterChanged',
         value: function dropFilterChanged() {
             var me = this,
@@ -208,11 +216,13 @@ var ColorsWidget = (function () {
                 currFilter = this.filters[filterKey],
                 lis = undefined,
                 firstLi = undefined,
-                currColor = undefined;
+                currColor = undefined,
+                text = undefined;
 
             for (key in currFilter.obs) {
                 currColor = me._node.colorsTemp[filterKey + "." + key] || currFilter.obs[key].color;
-                arr.push("<li data-color='" + currColor + "' id='liColor_" + filterKey + "." + key + "'><span style='background:" + currColor + "'> </span>" + (currFilter.tf ? tfLabels[key] : key) + "&nbsp;</li>");
+                text = filterKey === "h" ? me._makeHeightVisible(key) : key;
+                arr.push("<li data-color='" + currColor + "' id='liColor_" + filterKey + "." + key + "'><span style='background:" + currColor + "'> </span>" + (currFilter.tf ? tfLabels[key] : text) + "&nbsp;</li>");
             }
 
             this._node.ulColors.innerHTML = arr.join("");
@@ -561,6 +571,9 @@ var DataLoader = (function () {
                 if (!filters.l.obs[ob.l]) {
                     filters.l.obs[ob.l] = { c: 1, indexes: [] };
                 }
+                if (!filters.h.obs[ob.h]) {
+                    filters.h.obs[ob.h] = { c: 1, indexes: [] };
+                }
                 filters.s.obs[ob.s].indexes.push(ob);
                 filters.i.obs[ob.i].indexes.push(ob);
                 filters.r.obs[ob.r].indexes.push(ob);
@@ -572,6 +585,7 @@ var DataLoader = (function () {
                 filters.x.obs[ob.x].indexes.push(ob);
                 filters.v.obs[ob.v].indexes.push(ob);
                 filters.l.obs[ob.l].indexes.push(ob);
+                filters.h.obs[ob.h].indexes.push(ob);
             }
 
             //Initialize the data object
@@ -602,6 +616,7 @@ var DataLoader = (function () {
             addFilter("f", "Port of Load", false);
             addFilter("v", "Is VGM Weight", true);
             addFilter("l", "Length", false);
+            addFilter("h", "Height", false);
 
             //Iterate through data
             for (j = 0, lenD = data.conts.length; j < lenD; j += 1) {

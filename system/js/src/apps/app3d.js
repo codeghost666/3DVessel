@@ -189,6 +189,13 @@ controlsControl = {
         me.dropAddHouse = dropAddHouse;
     },
 
+    _makeHeightVisible: function(h) {
+        let hNum = Number(h),
+            hInt = Math.floor(hNum),
+            hDec = (hNum - hInt) * 1.2;
+            return hInt + hDec;
+    },
+
     prepareFilter: function (e) {
         var v = e.target.value, key, currentFilter, 
             opts = [ "<option value=''>No filter</option>"],
@@ -222,7 +229,7 @@ controlsControl = {
         } else {
             let orderedKeys = _.keys(currentFilter.obs).sort(), m, lenM;
             for(m = 0, lenM = orderedKeys.length; m < lenM; m += 1) {
-                opts.push("<option value='" + orderedKeys[m] + "'>" + orderedKeys[m] + "</option>");
+                opts.push("<option value='" + orderedKeys[m] + "'>" + (v === "h" ? me._makeHeightVisible(orderedKeys[m]) : orderedKeys[m]) + "</option>");
             }
         }
         me.dropFilterValue.innerHTML = opts.join("");
@@ -607,7 +614,8 @@ controlsControl = {
     },
 
     showColorsTable: function (attr) {
-        var tableColors = document.getElementById("tableColors"),
+        var me = controlsControl,
+            tableColors = document.getElementById("tableColors"),
             liColors = [], key, attr, isTf, val,
             filters = app3d.data.filters,
             currentFilter = filters[attr],
@@ -624,7 +632,7 @@ controlsControl = {
                     liColors.push("<li><span style='background:" + val.color + "'></span>" + (key==="1" ? "yes" : "no") + "</li>");
                 }
             } else {
-                liColors.push("<li><span style='background:" + val.color + "'></span>" + key + "</li>");
+                liColors.push("<li><span style='background:" + val.color + "'></span>" + (attr === "h" ? me._makeHeightVisible(key) : key) + "</li>");
             }
         }
         tableColors.innerHTML = liColors.join("");
@@ -705,6 +713,9 @@ controlsControl = {
             me.prevnextCont.style.display = "block";
 
             me._showBaysHatchCovers(me.hatchDecksVisible);
+
+            me.openBayInfo.style.left = "30px";
+            
         }
 
         function contractBays() {
@@ -728,6 +739,8 @@ controlsControl = {
             
             me.prevnextCont.style.display = "none";
             me.pauseControls(false);
+
+            me.openBayInfo.style.left = "-300px";
             
         }
 

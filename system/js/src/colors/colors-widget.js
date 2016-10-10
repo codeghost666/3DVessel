@@ -142,19 +142,27 @@ export class ColorsWidget {
 
     }
 
+    _makeHeightVisible(h) {
+        let hNum = Number(h),
+            hInt = Math.floor(hNum),
+            hDec = (hNum - hInt) * 1.2;
+            return hInt + hDec;
+    }
+
     dropFilterChanged () {
         let me = this,
             arr = [], key,
             tfLabels = { "0" : "no", "1": "yes" },
             filterKey = this._node.dropdwn.value,
             currFilter = this.filters[filterKey],
-            lis, firstLi, currColor;
+            lis, firstLi, currColor, text;
 
         for (key in currFilter.obs) {
             currColor = me._node.colorsTemp[filterKey + "." + key ] || currFilter.obs[key].color;
+            text = (filterKey === "h" ? me._makeHeightVisible(key) : key);
             arr.push("<li data-color='" + currColor + "' id='liColor_" + filterKey + "." + key + "'><span style='background:" +
                 currColor + "'> </span>" + 
-                (currFilter.tf ? tfLabels[key] : key) + "&nbsp;</li>");
+                (currFilter.tf ? tfLabels[key] : text) + "&nbsp;</li>");
         }
 
         this._node.ulColors.innerHTML = arr.join("");

@@ -196,6 +196,14 @@ var ColorsWidget = (function () {
             }
         }
     }, {
+        key: '_makeHeightVisible',
+        value: function _makeHeightVisible(h) {
+            var hNum = Number(h),
+                hInt = Math.floor(hNum),
+                hDec = (hNum - hInt) * 1.2;
+            return hInt + hDec;
+        }
+    }, {
         key: 'dropFilterChanged',
         value: function dropFilterChanged() {
             var me = this,
@@ -206,11 +214,13 @@ var ColorsWidget = (function () {
                 currFilter = this.filters[filterKey],
                 lis = undefined,
                 firstLi = undefined,
-                currColor = undefined;
+                currColor = undefined,
+                text = undefined;
 
             for (key in currFilter.obs) {
                 currColor = me._node.colorsTemp[filterKey + "." + key] || currFilter.obs[key].color;
-                arr.push("<li data-color='" + currColor + "' id='liColor_" + filterKey + "." + key + "'><span style='background:" + currColor + "'> </span>" + (currFilter.tf ? tfLabels[key] : key) + "&nbsp;</li>");
+                text = filterKey === "h" ? me._makeHeightVisible(key) : key;
+                arr.push("<li data-color='" + currColor + "' id='liColor_" + filterKey + "." + key + "'><span style='background:" + currColor + "'> </span>" + (currFilter.tf ? tfLabels[key] : text) + "&nbsp;</li>");
             }
 
             this._node.ulColors.innerHTML = arr.join("");

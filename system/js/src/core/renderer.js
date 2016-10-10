@@ -579,8 +579,6 @@ export class Renderer3D {
             }
         }
 
-        console.log("hc-ee");
-
         this.scene.add(hatchGroup3D);
         hatchGroup3D.position.y = 1.5;
         
