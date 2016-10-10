@@ -525,13 +525,15 @@ controlsControl = {
 
         var show = ev.target.id === "open-panel",
             me = controlsControl,
+            sizeH,
             fileToLoad;
 
         if (show) {
             me.bayInfo.style.display = "block";
             app3d.pauseRendering();
-            fileToLoad = queryParams.json.replace("..%2Fget3DVesselData.php%3Ffiletoload%3D", "filetoload=");
-            me.bayInfoIframe.src = window.bayviewRoute + "?" + fileToLoad + "&from3d=true";
+            sizeH = Math.floor(app3d.height * 0.85);
+            me.bayInfoIframe.src = window.bayviewRoute + "?filetoload=" + queryParams.filetoload + "&from3d=true&bay=" + Number(me.baySelected);
+            me.bayInfoIframe.style.height = sizeH + "px";
         } else {
             me.bayInfo.style.display = "none";
             app3d.resumeRendering();
@@ -1329,6 +1331,21 @@ var ColorsWidget = (function () {
             };
             req.send(JSON.stringify(dataToPost));
         }
+    }, {
+        key: 'getColors',
+        value: function getColors() {
+            var r = {},
+                fltr = undefined,
+                inst = undefined,
+                filters = this.filters;
+            for (fltr in filters) {
+                r[fltr] = {};
+                for (inst in filters[fltr].obs) {
+                    r[fltr][inst] = { color: filters[fltr].obs[inst].color, colorIsRandom: filters[fltr].obs[inst].colorIsRandom };
+                }
+            }
+            return r;
+        }
     }]);
 
     return ColorsWidget;
@@ -1556,6 +1573,9 @@ var DataLoader = (function () {
                 if (!filters.v.obs[ob.v]) {
                     filters.v.obs[ob.v] = { c: 1, indexes: [] };
                 }
+                if (!filters.l.obs[ob.l]) {
+                    filters.l.obs[ob.l] = { c: 1, indexes: [] };
+                }
                 filters.s.obs[ob.s].indexes.push(ob);
                 filters.i.obs[ob.i].indexes.push(ob);
                 filters.r.obs[ob.r].indexes.push(ob);
@@ -1566,6 +1586,7 @@ var DataLoader = (function () {
                 filters.t.obs[ob.t].indexes.push(ob);
                 filters.x.obs[ob.x].indexes.push(ob);
                 filters.v.obs[ob.v].indexes.push(ob);
+                filters.l.obs[ob.l].indexes.push(ob);
             }
 
             //Initialize the data object
@@ -1595,6 +1616,7 @@ var DataLoader = (function () {
             addFilter("d", "Port of Discharge", false);
             addFilter("f", "Port of Load", false);
             addFilter("v", "Is VGM Weight", true);
+            addFilter("l", "Length", false);
 
             //Iterate through data
             for (j = 0, lenD = data.conts.length; j < lenD; j += 1) {
@@ -1610,7 +1632,7 @@ var DataLoader = (function () {
                 obj.myJ = j;
                 obj.cDash = obj.c.replace(/\s/ig, "-");
                 if (obj.f === undefined && obj.ld !== undefined) {
-                    obf.f = obj.ld;
+                    obj.f = obj.ld;
                 }
 
                 containersIDs["cont_" + obj.cDash] = obj;
@@ -2959,6 +2981,7 @@ var VesselsApp2D = (function () {
         this.inchFactor = 0;
         this.lineWidth = 1;
 
+        this.baseUrl = "";
         this.data = null;
         this.dataLoader = new DataLoader.DataLoader(null);
 
@@ -3591,7 +3614,7 @@ var VesselsApp2D = (function () {
                 reqUpload.done(function (result) {
                     console.log(result);
                     if (result.download) {
-                        divProgress.innerHTML = "<a href='" + result.download + "' target='_blank'>Download PDF</a><br /><br />";
+                        divProgress.innerHTML = "<a href='" + me.baseUrl + result.download + "' target='_blank'>Download PDF</a><br /><br />";
                         closeBtn = document.createElement("button");
                         closeBtn.innerHTML = "Close this window";
                         __d__.addEventLnr(closeBtn, "click", me.close.bind(me));

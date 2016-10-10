@@ -314,6 +314,21 @@ var ColorsWidget = (function () {
             };
             req.send(JSON.stringify(dataToPost));
         }
+    }, {
+        key: 'getColors',
+        value: function getColors() {
+            var r = {},
+                fltr = undefined,
+                inst = undefined,
+                filters = this.filters;
+            for (fltr in filters) {
+                r[fltr] = {};
+                for (inst in filters[fltr].obs) {
+                    r[fltr][inst] = { color: filters[fltr].obs[inst].color, colorIsRandom: filters[fltr].obs[inst].colorIsRandom };
+                }
+            }
+            return r;
+        }
     }]);
 
     return ColorsWidget;

@@ -2,60 +2,12 @@
 'use strict';
 
 var ves2d = require('../core/vessels-2d.js'),
-    __s__ = require('../utils/js-helpers.js'),
-    __d__ = require('../utils/dom-utilities.js'),
-    colorWidget = require('../colors/colors-widget.js'),
-    i18labels = require('../core/i18labels.js');
+    colorWidget = require('../colors/colors-widget.js');
 
-var app2d,
-    data,
-    queryParams = __s__.getQueryParams(),
-    btnLaunch = document.getElementById("btnLaunch");
+window.VesselsApp2D = ves2d.VesselsApp2D;
+window.appColorsWidget = colorWidget.ColorsWidget;
 
-window.appVessels2D = ves2d.VesselsApp2D;
-
-/* Main program 2D ------------------------------------------------  */
-
-//Example
-app2d = new ves2d.VesselsApp2D(btnLaunch);
-app2d.loadUrl(queryParams.json, i18labels.LOADING_DATA).then(function (loadedData) {
-    var modelsFactory = app2d.modelsFactory,
-        clrs = undefined,
-        maxDepth = undefined,
-        maxDepthHalf = undefined;
-
-    //--Start: This is needed for stand-alone functioning
-    //Process data
-    app2d.data = app2d.loadData(loadedData);
-
-    //Pass 1. Map to  models
-    for (var j = 0, lenJ = app2d.data.data.info.contsL; j < lenJ; j += 1) {
-        modelsFactory.addIsoModel(app2d.data.data.conts[j]);
-    }
-
-    //Pass 2. Add colors (random)
-    modelsFactory.extendSpecs(app2d.data.filters);
-
-    //Pass 3. Get colors from settings
-    clrs = new colorWidget.ColorsWidget(null, app2d.data.filters, null);
-    if (window.userSettings) {
-        clrs.mergeColorSettings(window.userSettings);
-    }
-
-    //--End: This is needed for stand-alone functioning
-
-    //app2d
-    app2d.applyColorsFilter(app2d.data.filters);
-    app2d.setTitle(loadedData.VesselName, loadedData.PlaceOfDeparture, loadedData.VoyageNumber);
-    app2d.setMetaData(loadedData.VesselName, loadedData.VesselCallSign, loadedData.Sender, loadedData.Recipient, loadedData.PlaceOfDeparture, loadedData.VoyageNumber, loadedData.FooterLeft, loadedData.FooterRight);
-    app2d.postUrl = window.generatePdfRoute;
-}, function (msg) {
-    console.error(msg);
-});
-
-window.example2d = app2d;
-
-},{"../colors/colors-widget.js":2,"../core/i18labels.js":4,"../core/vessels-2d.js":6,"../utils/dom-utilities.js":7,"../utils/js-helpers.js":8}],2:[function(require,module,exports){
+},{"../colors/colors-widget.js":2,"../core/vessels-2d.js":6}],2:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -364,6 +316,21 @@ var ColorsWidget = (function () {
             };
             req.send(JSON.stringify(dataToPost));
         }
+    }, {
+        key: 'getColors',
+        value: function getColors() {
+            var r = {},
+                fltr = undefined,
+                inst = undefined,
+                filters = this.filters;
+            for (fltr in filters) {
+                r[fltr] = {};
+                for (inst in filters[fltr].obs) {
+                    r[fltr][inst] = { color: filters[fltr].obs[inst].color, colorIsRandom: filters[fltr].obs[inst].colorIsRandom };
+                }
+            }
+            return r;
+        }
     }]);
 
     return ColorsWidget;
@@ -591,6 +558,9 @@ var DataLoader = (function () {
                 if (!filters.v.obs[ob.v]) {
                     filters.v.obs[ob.v] = { c: 1, indexes: [] };
                 }
+                if (!filters.l.obs[ob.l]) {
+                    filters.l.obs[ob.l] = { c: 1, indexes: [] };
+                }
                 filters.s.obs[ob.s].indexes.push(ob);
                 filters.i.obs[ob.i].indexes.push(ob);
                 filters.r.obs[ob.r].indexes.push(ob);
@@ -601,6 +571,7 @@ var DataLoader = (function () {
                 filters.t.obs[ob.t].indexes.push(ob);
                 filters.x.obs[ob.x].indexes.push(ob);
                 filters.v.obs[ob.v].indexes.push(ob);
+                filters.l.obs[ob.l].indexes.push(ob);
             }
 
             //Initialize the data object
@@ -630,6 +601,7 @@ var DataLoader = (function () {
             addFilter("d", "Port of Discharge", false);
             addFilter("f", "Port of Load", false);
             addFilter("v", "Is VGM Weight", true);
+            addFilter("l", "Length", false);
 
             //Iterate through data
             for (j = 0, lenD = data.conts.length; j < lenD; j += 1) {
@@ -645,7 +617,7 @@ var DataLoader = (function () {
                 obj.myJ = j;
                 obj.cDash = obj.c.replace(/\s/ig, "-");
                 if (obj.f === undefined && obj.ld !== undefined) {
-                    obf.f = obj.ld;
+                    obj.f = obj.ld;
                 }
 
                 containersIDs["cont_" + obj.cDash] = obj;
@@ -1021,6 +993,7 @@ var VesselsApp2D = (function () {
         this.inchFactor = 0;
         this.lineWidth = 1;
 
+        this.baseUrl = "";
         this.data = null;
         this.dataLoader = new DataLoader.DataLoader(null);
 
@@ -1653,7 +1626,7 @@ var VesselsApp2D = (function () {
                 reqUpload.done(function (result) {
                     console.log(result);
                     if (result.download) {
-                        divProgress.innerHTML = "<a href='" + result.download + "' target='_blank'>Download PDF</a><br /><br />";
+                        divProgress.innerHTML = "<a href='" + me.baseUrl + result.download + "' target='_blank'>Download PDF</a><br /><br />";
                         closeBtn = document.createElement("button");
                         closeBtn.innerHTML = "Close this window";
                         __d__.addEventLnr(closeBtn, "click", me.close.bind(me));

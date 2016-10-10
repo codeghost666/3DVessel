@@ -156,12 +156,19 @@ canvas {
   overflow: auto; }
   .bay-panel .iframe-container {
     margin: 0 auto;
-    padding: 110px 0;
+    padding: 10px;
     width: 100%;
     max-width: 1260px;
     height: 500px;
     box-sizing: border-box;
-    border: 2px solid #aaa; }
+    background: #f8f8f8;
+    border: 3px solid #aaa;
+    box-shadow: 0 0 15px 3px rgba(0, 0, 0, 0.3);
+    position: absolute;
+    top: 10%;
+    bottom: 5%;
+    left: 10%;
+    right: 10%; }
   .bay-panel .table-container {
     margin: 0 auto;
     padding: 110px 0;
@@ -378,6 +385,32 @@ canvas {
     width: 50px;
     height: 50px; }
 
+@media print {
+  .bay-panel,
+  html, body {
+    height: auto;
+    width: auto;
+    overflow: visible; }
+
+  .tracer, .posted-values,
+  .open-close-panel, .no-rendering, .loading-div, .container, .info-panel {
+    display: none; }
+
+  .bay-panel {
+    position: static;
+    overflow: visible; }
+    .bay-panel .table-container {
+      margin: 0 auto;
+      padding: 0;
+      max-width: 100%;
+      overflow: visible table;
+        overflow-overflow: visible;
+        overflow-box-shadow: none; }
+
+  .titleH1, .titleBay {
+    position: static;
+    margin: 1em 0;
+    padding: 0; } }
 .colors-container {
   position: fixed;
   top: 50%;
@@ -390,7 +423,9 @@ canvas {
   box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.3);
   background: #ffffff;
   border: 6px solid #cccccc;
-  display: none; }
+  display: none;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.6em; }
   .colors-container h2 {
     font-size: 15px;
     margin: 0 0 10px 0; }
@@ -419,7 +454,8 @@ canvas {
       border-radius: 3px;
       overflow: hidden;
       border: 1px solid #ccc;
-      cursor: pointer; }
+      cursor: pointer;
+      font-family: Arial, Helvetica, sans-serif; }
       .colors-container .colors-container-ulColors li span {
         display: block;
         width: 20px;
@@ -451,7 +487,9 @@ canvas {
   box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.3);
   background: #ffffff;
   border: 6px solid #cccccc;
-  display: none; }
+  display: none;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.6em; }
   .printopts-container h2 {
     font-size: 15px;
     margin: 0 0 10px 0; }
@@ -493,30 +531,3 @@ canvas {
       border: 1px solid #0a0; }
       .printopts-container button.save:hover {
         background: #009100; }
-
-@media print {
-  .bay-panel,
-  html, body {
-    height: auto;
-    width: auto;
-    overflow: visible; }
-
-  .tracer, .posted-values,
-  .open-close-panel, .no-rendering, .loading-div, .container, .info-panel {
-    display: none; }
-
-  .bay-panel {
-    position: static;
-    overflow: visible; }
-    .bay-panel .table-container {
-      margin: 0 auto;
-      padding: 0;
-      max-width: 100%;
-      overflow: visible table;
-        overflow-overflow: visible;
-        overflow-box-shadow: none; }
-
-  .titleH1, .titleBay {
-    position: static;
-    margin: 1em 0;
-    padding: 0; } }

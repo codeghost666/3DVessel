@@ -148,6 +148,7 @@ export class VesselsApp2D {
         this.inchFactor = 0;
         this.lineWidth = 1;
 
+        this.baseUrl = "";
         this.data = null;
         this.dataLoader = new DataLoader.DataLoader(null);
 
@@ -678,7 +679,7 @@ export class VesselsApp2D {
             reqUpload.done(function (result) {
                 console.log(result);
                 if (result.download) {
-                    divProgress.innerHTML = "<a href='" + result.download + "' target='_blank'>Download PDF</a><br /><br />";
+                    divProgress.innerHTML = "<a href='" + me.baseUrl + result.download + "' target='_blank'>Download PDF</a><br /><br />";
                     closeBtn = document.createElement("button");
                     closeBtn.innerHTML = "Close this window";
                     __d__.addEventLnr(closeBtn, "click", me.close.bind(me));

@@ -72,7 +72,7 @@
             <span id="close-panel" class="open-close-panel noselect">
                 <br />&larr; back to 3D view
             </span>
-            <div id="bay-table-container" class="table-container"></div>
+            <iframe id="bay-iframe-container" class="iframe-container" width="100%"></iframe>
         </div>    
         
         <div id="tracer" class="tracer"> </div>

@@ -472,14 +472,15 @@ controlsControl = {
     showBayInfo: function(ev) {
         
         var show = ev.target.id === "open-panel",
-            me = controlsControl,
+            me = controlsControl, sizeH,
             fileToLoad;
             
         if (show) {
             me.bayInfo.style.display = "block";
             app3d.pauseRendering();
-            fileToLoad = queryParams.json.replace("..%2Fget3DVesselData.php%3Ffiletoload%3D", "filetoload=");
-            me.bayInfoIframe.src = window.bayviewRoute + "?" + fileToLoad + "&from3d=true";
+            sizeH = Math.floor(app3d.height * 0.85);
+            me.bayInfoIframe.src = window.bayviewRoute + "?filetoload=" + queryParams.filetoload + "&from3d=true&bay=" + Number(me.baySelected);
+            me.bayInfoIframe.style.height = sizeH + "px";
         } else {
             me.bayInfo.style.display = "none";
             app3d.resumeRendering();

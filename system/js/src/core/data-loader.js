@@ -153,6 +153,7 @@ export class DataLoader {
             if (!filters.t.obs[ob.t]) { filters.t.obs[ob.t] = { c: 1, indexes: [] }; }
             if (!filters.x.obs[ob.x]) { filters.x.obs[ob.x] = { c: 1, indexes: [] }; }
             if (!filters.v.obs[ob.v]) { filters.v.obs[ob.v] = { c: 1, indexes: [] }; }
+            if (!filters.l.obs[ob.l]) { filters.l.obs[ob.l] = { c: 1, indexes: [] }; }
             filters.s.obs[ob.s].indexes.push(ob);
             filters.i.obs[ob.i].indexes.push(ob);
             filters.r.obs[ob.r].indexes.push(ob);
@@ -163,6 +164,7 @@ export class DataLoader {
             filters.t.obs[ob.t].indexes.push(ob);
             filters.x.obs[ob.x].indexes.push(ob);
             filters.v.obs[ob.v].indexes.push(ob);
+            filters.l.obs[ob.l].indexes.push(ob);
         }
 
         //Initialize the data object
@@ -190,6 +192,7 @@ export class DataLoader {
         addFilter("d", "Port of Discharge", false);
         addFilter("f", "Port of Load", false);
         addFilter("v", "Is VGM Weight", true);
+        addFilter("l", "Length", false);
 
         //Iterate through data
         for (j = 0, lenD = data.conts.length; j < lenD; j += 1) {
@@ -204,7 +207,7 @@ export class DataLoader {
             obj.iTier = Number(obj.tier);
             obj.myJ = j;
             obj.cDash = obj.c.replace(/\s/ig, "-");
-            if (obj.f === undefined && obj.ld !== undefined) { obf.f = obj.ld; }
+            if (obj.f === undefined && obj.ld !== undefined) { obj.f = obj.ld; }
             
             containersIDs["cont_" + obj.cDash] = obj;
             
