@@ -754,14 +754,11 @@ controlsControl = {
 
         //Expands the bays horizontally
         function expandBays() {
-            var cbbj = undefined;
+            var cbbj = undefined,
+                firstBay = 0;
 
             me.dropBays.setAttribute("disabled", "disabled");
             me.dropAddHouse.setAttribute("disabled", "disabled");
-
-            if (me.baySelected !== "") {
-                me.openBayInfo.style.left = "-300px";
-            }
 
             for (j = 1; j <= lastBay + 1; j += 1) {
                 key = __s__.pad(j, 3);
@@ -775,6 +772,9 @@ controlsControl = {
                 if (g3Bay.isBlockStart && cbbj.n) {
                     xAccum -= xAdd;
                     g3Bay.labels.visible = true;
+                    if (!firstBay) {
+                        firstBay = g3Bay.iBay;
+                    }
                 }
 
                 g3Bay.position.z = j & 1 && !g3Bay.isBlockStart ? 22.5 + extraSep : 0;
@@ -797,6 +797,7 @@ controlsControl = {
             me._showBaysHatchCovers(me.hatchDecksVisible);
 
             me.openBayInfo.style.left = "30px";
+            me.baySelected = __s__.pad(firstBay, 3);
         }
 
         function contractBays() {
@@ -824,6 +825,7 @@ controlsControl = {
             me.pauseControls(false);
 
             me.openBayInfo.style.left = "-300px";
+            me.baySelected = "";
         }
 
         calculateContsByBlock();
@@ -893,6 +895,7 @@ controlsControl = {
         TweenLite.to(app3d.renderer3d.camera.position, timing, { x: gBay.position.x, ease: Power2.easeInOut });
         TweenLite.to(app3d.renderer3d.controls.target, timing, { x: gBay.position.x, ease: Power2.easeInOut });
         app3d._bayNode.innerHTML = "<small>bay</small> " + gBay.iBay;
+        me.baySelected = __s__.pad(gBay.iBay, 3);
 
         me.prevnextNum = newBlockNum;
     },
