@@ -56,10 +56,10 @@
                 <input id="showWireframesFiltered" checked type="checkbox" /> <label for="showWireframesFiltered" class="noselect">Show wireframes</label>
             </div>
             <div class="coloring">
-                <h3>Color containers by:</h3>
+                <h3>Colour containers by:</h3>
                 <select id="dropColors"></select>
                 <ul id="tableColors"></ul>
-                <button id="launchColorsWidget" class="launchColorsWidget">Customize colors</button>
+                <button id="launchColorsWidget" class="launchColorsWidget">Customize colours</button>
             </div>
             <div class="generate-pdf">
                 <button id="btnLaunchPDF" class="btnLaunchPDF">PRINT Full Cargo View</button>
