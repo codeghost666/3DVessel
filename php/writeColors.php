@@ -17,7 +17,7 @@ $data = json_decode(file_get_contents('php://input'), true);
 $sql_query = "";
 
 //Database
-require_once 'db.php';
+require_once '../../db.php';
 use Illuminate\Database\Capsule\Manager as DB;
 $colors = DB::table('viewer_user_colors')->where('username', $username)->get();
 
