@@ -38,7 +38,7 @@ foreach ($data as $r=>$rowColor) {
             ['attribute_value', '=', $prop],
             ['username', '=', $username]
         ])->update(['hex_color' => $hexColor]);
-        echo "UPD " . $vuc->ID . "\n";
+        echo "UPD " . $vuc->id . "\n";
     } else {
         $dbId = DB::table('viewer_user_colors')->insertGetId(
             array('attribute_key' => $key, 'attribute_value' => $prop, 'hex_color' => $hexColor, 'username' => $username )

@@ -12,9 +12,11 @@ function readColors() {
 	if ($data !== false){
 		$username = dbase::globalMagic($data['username']);
 	}
+	echo "<!--" . $username . "-->";
 
 	//Query DB for username
 	$sql_results ="SELECT attribute_key, attribute_value, hex_color FROM userbase.viewer_user_colors WHERE username = '".$username."';";
+	echo "<!--" . $sql_results. "-->";
 
 	//ALTER TABLE foobar_data MODIFY COLUMN col VARCHAR(255) NOT NULL DEFAULT '{}';
 	$datagroup = dbase::globalQueryPlus($sql_results,$conn,2);
@@ -27,11 +29,7 @@ function readColors() {
 		}
 	}
 
-	echo "<!--";
-	echo $username;
-	echo $sql_results;
-	echo json_encode($response);
-	echo "-->";	
+	echo "<!--" . json_encode($response. "-->");
 	return $response;
 }
 
