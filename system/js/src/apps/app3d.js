@@ -492,7 +492,7 @@ controlsControl = {
             me.bayInfo.style.display = "block";
             app3d.pauseRendering();
             sizeH = Math.floor(app3d.height * 0.85);
-            me.bayInfoIframe.src = window.bayviewRoute + "?filetoload=" + queryParams.filetoload + "&from3d=true&bay=" + Number(me.baySelected);
+            me.bayInfoIframe.src = (window.bayviewRoute || "") + "?filetoload=" + queryParams.filetoload + "&from3d=true&bay=" + Number(me.baySelected || 0);
             me.bayInfoIframe.style.height = sizeH + "px";
         } else {
             me.bayInfo.style.display = "none";

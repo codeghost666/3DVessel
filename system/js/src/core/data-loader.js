@@ -185,7 +185,7 @@ export class DataLoader {
         //Initialize filters
         filters = {};
         addFilter("i", "Equipment Type", false);
-        addFilter("s", "Status", true);
+        addFilter("s", "Is Full", true);
         addFilter("r", "Is Reefer", true);
         addFilter("w", "Is Hazardous", true);
         addFilter("t", "Is Tank", true);

@@ -16,7 +16,7 @@ export class ColorsWidget {
 
         this._node = (function(){
             let divMainC, dropdwn, ulColors, btnSave, btnCancel, colorPickerDiv, colorPickerJoe,
-                key, filter, arrLis = [], divHolder,
+                key, filter, arrLis = [], divHolder, j, orderedNames, k, lenK,
                 baseId = "colors-container-" + Math.round(Math.random() * 100000);
             
             //Main DOM element
@@ -33,10 +33,15 @@ export class ColorsWidget {
             divHolder.appendChild(dropdwn);
 
             //Populate dropdown
-            for(key in filters) {
+            orderedNames = [];
+            for(key in filters) { orderedNames.push({name: filters[key].name, key: key }); }
+            orderedNames = orderedNames.sort((a, b) => a.name >= b.name ? 1 : -1 );
+
+            for (k = 0, lenK = orderedNames.length; k < lenK; k += 1) {
+                key = orderedNames[k].key;
                 filter = filters[key];
                 arrLis.push("<option value='" + key + "'>" + filter.name + "</option>");
-            }
+            }                
             dropdwn.innerHTML = arrLis.join("");
 
             btnSave = document.createElement("button");
@@ -155,9 +160,12 @@ export class ColorsWidget {
             tfLabels = { "0" : "no", "1": "yes" },
             filterKey = this._node.dropdwn.value,
             currFilter = this.filters[filterKey],
-            lis, firstLi, currColor, text;
+            lis, firstLi, currColor, text,
+            orderedKeys, m, lenM;
 
-        for (key in currFilter.obs) {
+        orderedKeys = _.keys(currFilter.obs).sort();
+        for(m = 0, lenM = orderedKeys.length; m < lenM; m += 1) {
+            key = orderedKeys[m];
             currColor = me._node.colorsTemp[filterKey + String.fromCharCode(240) + key ] || currFilter.obs[key].color;
             text = (filterKey === "h" ? me._makeHeightVisible(key) : key);
             arr.push("<li data-color='" + currColor + "' id='liColor_" + filterKey + String.fromCharCode(240) + key + "'><span style='background:" +
