@@ -1,10 +1,13 @@
 <?php
+echo "readColors.php init";
 
 function readColors() {
+	echo "readColors function";
 	$response;
 	require_once("/../../local_config.php");
 	require_once(APP_INC_PATH."bootstrap_frontend.php");
 	sessionsClass::site_protection(true,true,true,false,false);
+	echo "read includes";
 
 	$userid = dbase::globalMagic($_SESSION['userid']);
 
