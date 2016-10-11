@@ -935,6 +935,8 @@ app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA)
             app2d.setMetaData(loadedData.VesselName, loadedData.VesselCallSign, loadedData.Sender, loadedData.Recipient, loadedData.PlaceOfDeparture, loadedData.VoyageNumber, loadedData.FooterLeft, loadedData.FooterRight)
             
             app2d.postUrl = window.generatePdfRoute;
+            app2d.baseUrl = window.generatePdfBaseUrlRoute || "";
+		    app2d.baseDownloadUrl = window.downloadPdfBaseUrlRoute || "";
             app2d.onToggled = controlsControl.disableRendering;
             
             window.appVessels2D = app2d;

@@ -116,7 +116,9 @@ if($datagroup[1]>0){
             var bayviewRoute = "../bayview.php";
             var generatePdfRoute = "php/generatePDF.php";
             var writeColorsRoute = "php/writeColors.php";
-            var generatePdfBaseUrlRoute = "php/temp/";
+            var generatePdfBaseUrlRoute = "/BAPLIEViewerDisk/files/baplies/scanplans/<?php echo $username; ?>/";
+    		var downloadPdfBaseUrlRoute = "/SCANPLANS/<?php echo $username; ?>/";
+            
             var userSettings = { 
                     colors: <?php echo json_encode($response) ?>
                 };

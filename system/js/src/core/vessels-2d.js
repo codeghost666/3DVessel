@@ -149,6 +149,7 @@ export class VesselsApp2D {
         this.lineWidth = 1;
 
         this.baseUrl = "";
+        this.baseDownloadUrl = "";
         this.data = null;
         this.dataLoader = new DataLoader.DataLoader(null);
 
@@ -628,10 +629,6 @@ export class VesselsApp2D {
         function sendPagesToServer() {
             let postUrl = me.postUrl, reqUpload, json, isLndscp,
                 j, lenJ, closeBtn,
-                ajaxError = (err) => { 
-                    console.error(err);
-                    if (divProgress) { divProgress.innerHTML = "An error has ocurred."; }  
-                },
                 handlerUpload = (e) => {
                     if (e.lengthComputable) {
                         var percentage = Math.round((e.loaded * 100) / e.total);
@@ -657,7 +654,8 @@ export class VesselsApp2D {
                 voyageNumber: me.metaData.voyageNumber,
                 footerLeft: me.metaData.footerLeft,
                 footerRight: me.metaData.footerRight,
-                locationUrl: me.baseUrl
+                locationUrl: me.baseUrl,
+                downloadUrl: me.baseDownloadUrl
             };
             for (j = 0, lenJ = bayImages.length; j < lenJ; j += 1) {
                 json["page_" + j] = bayImages[j].toDataURL("image/png");
@@ -676,7 +674,17 @@ export class VesselsApp2D {
                 reqUpload.uploadProgress(handlerUpload);
             }
             
-            reqUpload.fail(ajaxError);
+            reqUpload.fail(function(err) {
+                console.error(err);
+                if (!divProgress) { return; } 
+                
+                divProgress.innerHTML = "An error has ocurred.";
+                closeBtn = document.createElement("button");
+                closeBtn.innerHTML = "Close this window";
+                __d__.addEventLnr(closeBtn, "click", me.close.bind(me));
+                divProgress.appendChild(closeBtn);
+            });
+
             reqUpload.done(function (result) {
                 console.log(result);
                 if (result.download) {

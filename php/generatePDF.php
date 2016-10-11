@@ -12,6 +12,7 @@
 
     //Make dir
     $const_location_url = $_POST["locationUrl"];
+    $conts_download_url = $_POST["downloadUrl"];
     mkdir($const_location_url, 0755, true);
 
     $title = $_POST["title"];
@@ -138,7 +139,7 @@
     $value = array(
         "numPages" => $num_images, 
         "pdfName" => $temp_id,
-        "download" => $const_location_url . $temp_id . ".pdf"
+        "download" => $conts_download_url . $temp_id . ".pdf"
     );
     echo json_encode($value);    
 ?>

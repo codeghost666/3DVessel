@@ -1046,6 +1046,8 @@ app3d.loadUrl(queryParams.json, i18labels.LOADING_DATA).then(function (loadedDat
     app2d.setMetaData(loadedData.VesselName, loadedData.VesselCallSign, loadedData.Sender, loadedData.Recipient, loadedData.PlaceOfDeparture, loadedData.VoyageNumber, loadedData.FooterLeft, loadedData.FooterRight);
 
     app2d.postUrl = window.generatePdfRoute;
+    app2d.baseUrl = window.generatePdfBaseUrlRoute || "";
+    app2d.baseDownloadUrl = window.downloadPdfBaseUrlRoute || "";
     app2d.onToggled = controlsControl.disableRendering;
 
     window.appVessels2D = app2d;
@@ -1783,7 +1785,7 @@ exports.INVALID_DATA_SOURCE = INVALID_DATA_SOURCE;
 var ERROR_PARSING_JSON = "Error while parsing the JSON file.";
 
 exports.ERROR_PARSING_JSON = ERROR_PARSING_JSON;
-var CLICK_TO_CHANGE_COLORS = "Click on colors to change them";
+var CLICK_TO_CHANGE_COLORS = "Click on colors to change them. A black dot means there is already a custom colour being used.";
 exports.CLICK_TO_CHANGE_COLORS = CLICK_TO_CHANGE_COLORS;
 var NO_COLOR_SETTINGS = "No color settings found. Will use random.";
 
@@ -3058,6 +3060,7 @@ var VesselsApp2D = (function () {
         this.lineWidth = 1;
 
         this.baseUrl = "";
+        this.baseDownloadUrl = "";
         this.data = null;
         this.dataLoader = new DataLoader.DataLoader(null);
 
@@ -3637,12 +3640,6 @@ var VesselsApp2D = (function () {
                     j = undefined,
                     lenJ = undefined,
                     closeBtn = undefined,
-                    ajaxError = function ajaxError(err) {
-                    console.error(err);
-                    if (divProgress) {
-                        divProgress.innerHTML = "An error has ocurred.";
-                    }
-                },
                     handlerUpload = function handlerUpload(e) {
                     if (e.lengthComputable) {
                         var percentage = Math.round(e.loaded * 100 / e.total);
@@ -3668,7 +3665,8 @@ var VesselsApp2D = (function () {
                     voyageNumber: me.metaData.voyageNumber,
                     footerLeft: me.metaData.footerLeft,
                     footerRight: me.metaData.footerRight,
-                    locationUrl: me.baseUrl
+                    locationUrl: me.baseUrl,
+                    downloadUrl: me.baseDownloadUrl
                 };
                 for (j = 0, lenJ = bayImages.length; j < lenJ; j += 1) {
                     json["page_" + j] = bayImages[j].toDataURL("image/png");
@@ -3687,7 +3685,19 @@ var VesselsApp2D = (function () {
                     reqUpload.uploadProgress(handlerUpload);
                 }
 
-                reqUpload.fail(ajaxError);
+                reqUpload.fail(function (err) {
+                    console.error(err);
+                    if (!divProgress) {
+                        return;
+                    }
+
+                    divProgress.innerHTML = "An error has ocurred.";
+                    closeBtn = document.createElement("button");
+                    closeBtn.innerHTML = "Close this window";
+                    __d__.addEventLnr(closeBtn, "click", me.close.bind(me));
+                    divProgress.appendChild(closeBtn);
+                });
+
                 reqUpload.done(function (result) {
                     console.log(result);
                     if (result.download) {
