@@ -1,5 +1,5 @@
 {
-  "name": "3D-Vessels",
+  "name": "3dvessels",
   "version": "1.1.0",
   "description": "3D Vessels",
   "main": "app.js",
@@ -22,5 +22,13 @@
   },
   "scripts": {
     "start": "http-server"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/baplieviewer/3DModel.git"
+  },
+  "bugs": {
+    "url": "https://gitlab.com/baplieviewer/3DModel/issues"
+  },
+  "homepage": "https://gitlab.com/baplieviewer/3DModel#README"
 }
