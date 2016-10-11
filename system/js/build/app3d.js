@@ -2403,6 +2403,10 @@ var Renderer3D = (function () {
                     hatchDiff = undefined,
                     arrHatchesWidth = undefined;
 
+                if (w === 0) {
+                    return [1];
+                }
+
                 hatchWidth = w === 5 || w === 6 || w === 9 ? 3 : w <= 4 ? w : 4;
                 hatchNum = w / hatchWidth;
                 hatchNumInt = Math.ceil(hatchNum);
