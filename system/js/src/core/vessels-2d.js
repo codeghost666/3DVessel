@@ -656,7 +656,8 @@ export class VesselsApp2D {
                 placeOfDeparture: me.metaData.placeOfDeparture,
                 voyageNumber: me.metaData.voyageNumber,
                 footerLeft: me.metaData.footerLeft,
-                footerRight: me.metaData.footerRight
+                footerRight: me.metaData.footerRight,
+                locationUrl: me.baseUrl
             };
             for (j = 0, lenJ = bayImages.length; j < lenJ; j += 1) {
                 json["page_" + j] = bayImages[j].toDataURL("image/png");
@@ -679,7 +680,7 @@ export class VesselsApp2D {
             reqUpload.done(function (result) {
                 console.log(result);
                 if (result.download) {
-                    divProgress.innerHTML = "<a href='" + me.baseUrl + result.download + "' target='_blank'>Download PDF</a><br /><br />";
+                    divProgress.innerHTML = "<a href='" + result.download + "' target='_blank'>Download PDF</a><br /><br />";
                     closeBtn = document.createElement("button");
                     closeBtn.innerHTML = "Close this window";
                     __d__.addEventLnr(closeBtn, "click", me.close.bind(me));

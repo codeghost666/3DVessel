@@ -95,7 +95,7 @@ if ($data !== false){
 }
 
 //Query DB for username
-$sql_results ="SELECT attribute_key, attribute_value, hex_color FROM userbase.viewer_user_colors WHERE username = '".$username."';";
+$sql_results ="SELECT attribute_key, attribute_value, hex_color FROM " . DB_NAME . ".viewer_user_colors WHERE username = '".$username."';";
 
 //ALTER TABLE foobar_data MODIFY COLUMN col VARCHAR(255) NOT NULL DEFAULT '{}';
 $datagroup = dbase::globalQueryPlus($sql_results,$conn,2);
@@ -116,6 +116,7 @@ if($datagroup[1]>0){
             var bayviewRoute = "../bayview.php";
             var generatePdfRoute = "php/generatePDF.php";
             var writeColorsRoute = "php/writeColors.php";
+            var generatePdfBaseUrlRoute = "php/temp/";
             var userSettings = { 
                     colors: <?php echo json_encode($response) ?>
                 };

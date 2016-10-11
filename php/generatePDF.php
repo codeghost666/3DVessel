@@ -9,7 +9,10 @@
     require('fpdf.php');
 
     set_time_limit(0);
-    $const_location_url = "temp/";
+
+    //Make dir
+    $const_location_url = $_POST["locationUrl"];
+    mkdir($const_location_url, 0755, true);
 
     $title = $_POST["title"];
     $page_size = $_POST["pageSize"];
@@ -135,7 +138,7 @@
     $value = array(
         "numPages" => $num_images, 
         "pdfName" => $temp_id,
-        "download" => "php/" . $const_location_url . $temp_id . ".pdf"
+        "download" => $const_location_url . $temp_id . ".pdf"
     );
     echo json_encode($value);    
 ?>
