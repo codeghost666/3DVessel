@@ -53,6 +53,16 @@
         pointer-events: none; }
       .colors-container .colors-container-ulColors li.selected {
         border-color: #000; }
+      .colors-container .colors-container-ulColors li.customized span:after {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        width: 4px;
+        height: 4px;
+        background: #000;
+        border-radius: 8px;
+        content: ' ';
+        display: block; }
   .colors-container .colorPicker,
   .colors-container .colors-container-colorPicker {
     float: left;

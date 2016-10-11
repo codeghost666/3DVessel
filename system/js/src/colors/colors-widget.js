@@ -168,7 +168,7 @@ export class ColorsWidget {
             key = orderedKeys[m];
             currColor = me._node.colorsTemp[filterKey + "___" + key ] || currFilter.obs[key].color;
             text = (filterKey === "h" ? me._makeHeightVisible(key) : key);
-            arr.push("<li data-color='" + currColor + "' id='liColor_" + filterKey + "___" + key + "'><span style='background:" +
+            arr.push("<li class='" + (!currFilter.obs[key].colorIsRandom ? "customized" : "") + "' data-color='" + currColor + "' id='liColor_" + filterKey + "___" + key + "'><span style='background:" +
                 currColor + "'> </span>" + 
                 (currFilter.tf ? tfLabels[key] : text) + "&nbsp;</li>");
         }
@@ -178,17 +178,19 @@ export class ColorsWidget {
         if (!lis || lis.length === 0) { return; } 
         
         firstLi = lis[0];
-        firstLi.className = "selected"; 
+        firstLi.className += " selected"; 
         this._currentOption = firstLi;
         
         //Initialize colorPicker
         if (!this._node.colorPickerJoe) {
             this._node.colorPickerJoe = colorjoe.rgb(this._node.colorPickerDiv, firstLi.getAttribute("data-color"));
             this._node.colorPickerJoe.on("change", function(color) {
-                let optionValue = me._currentOption.id.replace("liColor_", "");
+                let optionValue = me._currentOption.id.replace("liColor_", ""),
+                    prevVal = me._currentOption.getAttribute("data-color");;
                 me._currentOption.setAttribute("data-color", color.hex());
                 me._currentOption.getElementsByTagName("SPAN")[0].style.background = color.hex();
                 me._node.colorsTemp[optionValue] = color.hex();
+                if (prevVal !== color.hex() && me._currentOption.className.indexOf("customized") < 0) { me._currentOption.className += " customized"; }
             });
         } else {
             this._node.colorPickerJoe.set(firstLi.getAttribute("data-color"));
@@ -203,16 +205,16 @@ export class ColorsWidget {
 
         if (li.tagName !== "LI") { return; }
         lis = this._node.ulColors.getElementsByTagName("LI");
-        if (li.className === "selected") { return; }
+        if (li.className.indexOf("selected") >= 0) { return; }
 
         for (j = 0, lenJ = lis.length; j < lenJ; j += 1) {
             if (li !== lis[j]) {
-                lis[j].className = "";
+                lis[j].className = lis[j].className.replace("selected", "");
             }
         }
 
         setTimeout(function() {
-            li.className = "selected";
+            li.className += " selected";
             me._node.colorPickerJoe.set(li.getAttribute("data-color"), true);
             me._currentOption = li;
         }, 150);

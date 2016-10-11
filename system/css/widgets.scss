@@ -22,6 +22,10 @@ $colorInfo: #000;
 
             span { display: block; width:20px; height: 20px; position: absolute; top:0; left:0; pointer-events: none;}
             &.selected { border-color:#000; }
+            &.customized span:after { 
+                position:absolute; top:8px; left:8px; width:4px; height:4px; background: #000; border-radius: 8px;
+                content: ' '; display: block;
+            }
         }
     }
 
