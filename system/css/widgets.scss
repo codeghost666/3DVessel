@@ -1,7 +1,7 @@
 $colorInfo: #000;
 
 .colors-container {
-    position:fixed; top:50%; left:50%; width:500px; height: 300px; margin:-150px 0 0 -250px;
+    position:fixed; top:50%; left:50%; width:550px; min-height: 350px; margin:-175px 0 0 -275px;
     box-sizing: border-box; padding:15px;
     box-shadow: 0 0 10px 5px rgba(0,0,0,0.3);
     background: #ffffff; border:6px solid lighten($colorInfo, 80%); display: none;
@@ -31,7 +31,7 @@ $colorInfo: #000;
 
     .colorPicker,
     .colors-container-colorPicker {
-        float:left; width:45%; height: 160px; box-sizing: border-box; margin-left:5%; margin-top:10px;
+        float:left; width:42%; height: 160px; box-sizing: border-box; margin-left:8%; margin-top:10px;
     }
 } 
 

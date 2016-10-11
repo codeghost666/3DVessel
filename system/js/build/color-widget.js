@@ -383,7 +383,7 @@ exports.INVALID_DATA_SOURCE = INVALID_DATA_SOURCE;
 var ERROR_PARSING_JSON = "Error while parsing the JSON file.";
 
 exports.ERROR_PARSING_JSON = ERROR_PARSING_JSON;
-var CLICK_TO_CHANGE_COLORS = "Click on colors to change them";
+var CLICK_TO_CHANGE_COLORS = "Click on colors to change them. A black dot means there is already a custom colour being used.";
 exports.CLICK_TO_CHANGE_COLORS = CLICK_TO_CHANGE_COLORS;
 var NO_COLOR_SETTINGS = "No color settings found. Will use random.";
 
