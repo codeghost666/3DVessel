@@ -847,7 +847,7 @@ export class VesselsApp2D {
                     bayImages.push(canvasPage);
                 }
                 
-                ctxPage.drawImage(legendCanvases[k], 
+                ctxPage.drawImage(legends[k], 
                     Math.round(positions[nX].x + boxLeft), 
                     Math.round(positions[nX].y + boxTop));
             }
@@ -855,7 +855,7 @@ export class VesselsApp2D {
             divProgress.innerHTML = i18labels.PRINTOPTS_SENDINGPAGES;
             sendPagesToServer();
 
-        }, 500);
+        }, 1000);
 
         window.pagess = bayImages;
     }
