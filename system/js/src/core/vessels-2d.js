@@ -818,7 +818,8 @@ export class VesselsApp2D {
 
         setTimeout(function() {
             let lenJ = dataStructuredKeysArr.length,
-                lenK = legendCanvases.length,
+                legends = legendCanvases || drawLegend(),
+                lenK = legends.length,
                 nX;
             //Iterate bays & pages
             for (let j = 0; j < lenJ; j += 1) {
@@ -836,6 +837,7 @@ export class VesselsApp2D {
                 ctxPage.drawImage(im, positions[j].x + boxLeft, positions[j].y + boxTop);
             }
 
+            //Iterate legends & pages
             for (let k = 0; k < lenK; k += 1) {
                 nX = lenJ + k;
                 if (positions[nX].x === 0 && positions[nX].y === 0) {
