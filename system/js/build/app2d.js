@@ -896,11 +896,11 @@ var VesselsApp2D = (function () {
             sizes: [{ name: "Letter", w: 8.5, h: 11.0 }, { name: "Legal", w: 8.5, h: 14.0 }, { name: "A4", w: 8.3, h: 11.7 }, { name: "A3", w: 11.7, h: 16.5 }],
             dpis: [{ name: "300 dpi", res: 300 }, { name: "150 dpi", res: 150 }],
             extraSpace: {
-                labelsTopHeight: 5,
-                labelsLeftWidth: 5,
+                labelsTopHeight: 8,
+                labelsLeftWidth: 7,
                 extraOOGratio: 1 / 4
             },
-            padding: { w: 0.06, h: 15.0 },
+            padding: { w: 0.04, h: 11.0 },
             aboveBelowSep: 2
         }, opts);
 
@@ -1422,12 +1422,12 @@ var VesselsApp2D = (function () {
 
                 ctx.font = 24 * calcFactor + "px Georgia";
                 ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText(titleT, bayWTotal / 2, Math.max(labelsTopHeight / 2 * me.inchFactor, 0));
+                ctx.textBaseline = "top";
+                ctx.fillText(titleT, bayWTotal / 2, Math.max(labelsTopHeight / 2 * me.inchFactor, 0.5 * me.inchFactor));
 
                 ctx.font = 10 * calcFactor + "px Arial";
                 ctx.textAlign = "center";
-                ctx.textBaseline = "baseline";
+                ctx.textBaseline = "middle";
                 ctx.fillStyle = "#666666";
                 ctx.strokeStyle = "#dddddd";
                 ctx.lineWidth = 2 * me.lineWidth;
@@ -1444,7 +1444,7 @@ var VesselsApp2D = (function () {
                 }
                 for (c in mapCells) {
                     x = (mapCells[Number(c)] + labelsLeftWidth) * me.inchFactor;
-                    ctx.fillText(__s__.pad(c, 2), contWidthCenter + x, (_.min(mapTiers) - labelsTopHeight * 1.5) * me.inchFactor);
+                    ctx.fillText(__s__.pad(c, 2), contWidthCenter + x, (_.min(mapTiers) - labelsTopHeight * 0.5) * me.inchFactor);
                     ctx.fillText(__s__.pad(c, 2), contWidthCenter + x, (_.max(mapTiers) + labelsTopHeight * 1.5) * me.inchFactor);
                     for (t in mapTiers) {
                         y = (mapTiers[t] - contHeight + labelsTopHeight) * me.inchFactor;
@@ -1509,6 +1509,7 @@ var VesselsApp2D = (function () {
                     y = 0,
                     xInit = Math.round(6 * me.inchFactor),
                     yInit = Math.round(labelsTopHeight * me.inchFactor * 2),
+                    yHeight = maxH * me.inchFactor + labelsTopHeight * 2 * me.inchFactor,
                     yAdd = Math.round(14 * me.inchFactor),
                     xPad = Math.round(18 * me.inchFactor),
                     maxX = 0,
@@ -1519,43 +1520,54 @@ var VesselsApp2D = (function () {
                     obs = undefined,
                     obj = undefined,
                     canvases = [],
-                    columns = 0;
+                    columns = 0,
+                    verticalNum = 0,
+                    verticalMax = 0;
 
                 function addCanvas() {
-                    if (columns > 0 && columns % 2 === 0) {
-                        //create new canvas
-                        cnv = document.createElement("canvas");
-                        cnv.width = bayWTotal * 1.5;
-                        cnv.height = maxH * me.inchFactor + labelsTopHeight * 2 * me.inchFactor;
-                        ctx = cnv.getContext("2d");
-                        ctx.font = 19 * calcFactor + "px Arial";
-                        ctx.textAlign = "left";
-                        ctx.fillStyle = "#444444";
+                    //create new canvas
+                    cnv = document.createElement("canvas");
+                    cnv.width = bayWTotal * 1.5;
+                    cnv.height = yHeight;
+                    ctx = cnv.getContext("2d");
+                    ctx.font = 19 * calcFactor + "px Arial";
+                    ctx.textAlign = "left";
+                    ctx.fillStyle = "#444444";
 
-                        x = xInit;y = yInit;
-                        canvases.push(cnv);
-                    }
+                    x = xInit;y = yInit;columns = 0;
+                    canvases.push(cnv);
                 }
 
                 function addLabel(txt, obj) {
-                    obj[filterBy] = "";
-                    ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, true), x, y);
-                    if (obj.g) {
-                        ctx.drawImage(drawContainerOOG(obj, me.inchFactor * containerFactor, true), x - extraW, y - extraH);
+                    var cleanFilter = arguments.length <= 2 || arguments[2] === undefined ? true : arguments[2];
+
+                    if (cleanFilter) {
+                        obj[filterBy] = "";
                     }
+
+                    if (verticalNum === 0 && columns === 0) {
+                        addCanvas();
+                    }
+                    y = verticalNum * yAdd + yInit;
+
+                    ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor, cleanFilter), x, y);
+                    if (obj.g) {
+                        ctx.drawImage(drawContainerOOG(obj, me.inchFactor * containerFactor), x - extraW, y - extraH);
+                    }
+
                     ctx.fillText(txt, x + 14 * me.inchFactor, y + 8 * me.inchFactor);
+
                     maxX = Math.round(Math.max(maxX, ctx.measureText(txt).width));
-                    y += yAdd;
-                    if (y + yAdd > cnv.height) {
-                        y = yInit;x += xInit + xPad + maxX;maxX = 0;columns += 1;addCanvas();
+                    verticalNum += 1;
+
+                    if (verticalNum === verticalMax - 1) {
+                        y = yInit;x += xInit + xPad + maxX;maxX = 0;columns += 1;
+                        if (columns > 1) {
+                            columns = 0;x = xInit;
+                        }
+                        verticalNum = 0;
                     }
                 }
-
-                cnv = document.createElement("canvas");
-                cnv.width = bayWTotal * 1.5;
-                cnv.height = maxH * me.inchFactor + labelsTopHeight * 2 * me.inchFactor;
-                ctx = cnv.getContext("2d");
-                canvases.push(cnv);
 
                 calcFactor = fontFactor;
                 if (rws < 7) {
@@ -1565,24 +1577,13 @@ var VesselsApp2D = (function () {
                     containerFactor = 1.2;
                 }
 
-                ctx.font = 19 * calcFactor + "px Arial";
-                ctx.textAlign = "left";
-                ctx.fillStyle = "#444444";
+                verticalMax = Math.floor(yHeight / yAdd);
+                verticalNum = 0;
 
-                y = yInit;
-                x = xInit;
                 for (f in data.filters[filterBy].obs) {
-                    obs = data.filters[filterBy].obs[f];
                     obj = { s: 1 };
                     obj[filterBy] = f;
-                    ctx.drawImage(drawContainer(obj, me.inchFactor * containerFactor), x, y);
-                    ctx.fillText(f, x + 16 * me.inchFactor, y + 8 * me.inchFactor);
-                    maxX = Math.round(Math.max(maxX, ctx.measureText(f).width));
-                    y += yAdd;
-                    if (y + yAdd > cnv.height) {
-                        y = yInit;x += xInit + xPad + maxX;maxX = 0;columns += 1;
-                        addCanvas();
-                    }
+                    addLabel(f, obj, false);
                 }
 
                 //Add Labels
@@ -1817,7 +1818,8 @@ var VesselsApp2D = (function () {
 
             setTimeout(function () {
                 var lenJ = dataStructuredKeysArr.length,
-                    lenK = legendCanvases.length,
+                    legends = legendCanvases || drawLegend(),
+                    lenK = legends.length,
                     nX = undefined;
                 //Iterate bays & pages
                 for (var _j = 0; _j < lenJ; _j += 1) {
@@ -1838,6 +1840,7 @@ var VesselsApp2D = (function () {
                     ctxPage.drawImage(im, positions[_j].x + boxLeft, positions[_j].y + boxTop);
                 }
 
+                //Iterate legends & pages
                 for (var k = 0; k < lenK; k += 1) {
                     nX = lenJ + k;
                     if (positions[nX].x === 0 && positions[nX].y === 0) {
@@ -1847,12 +1850,12 @@ var VesselsApp2D = (function () {
                         bayImages.push(canvasPage);
                     }
 
-                    ctxPage.drawImage(legendCanvases[k], Math.round(positions[nX].x + boxLeft), Math.round(positions[nX].y + boxTop));
+                    ctxPage.drawImage(legends[k], Math.round(positions[nX].x + boxLeft), Math.round(positions[nX].y + boxTop));
                 }
 
                 divProgress.innerHTML = i18labels.PRINTOPTS_SENDINGPAGES;
                 sendPagesToServer();
-            }, 500);
+            }, 1000);
 
             window.pagess = bayImages;
         }
