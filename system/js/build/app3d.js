@@ -2927,6 +2927,11 @@ var VesselsApp2D = (function () {
             loaderColorSucess: "#79e3da",
             sizes: [{ name: "Letter", w: 8.5, h: 11.0 }, { name: "Legal", w: 8.5, h: 14.0 }, { name: "A4", w: 8.3, h: 11.7 }, { name: "A3", w: 11.7, h: 16.5 }],
             dpis: [{ name: "300 dpi", res: 300 }, { name: "150 dpi", res: 150 }],
+            extraSpace: {
+                labelsTopHeight: 5,
+                labelsLeftWidth: 5,
+                extraOOGratio: 1 / 4
+            },
             padding: { w: 0.06, h: 15.0 },
             aboveBelowSep: 2
         }, opts);
@@ -3115,7 +3120,7 @@ var VesselsApp2D = (function () {
                 paddingW = undefined;
 
             this.width = res * size[this._node.dropdwnOr.value === "1" ? "w" : "h"];
-            this.height = res * size[this._node.dropdwnOr.value !== "1" ? "w" : "h"];
+            this.height = res * size[this._node.dropdwnOr.value !== "1" ? "w" : "h"] - 1;
 
             arrLis = [];
             arrLis.push("<option value='1'>" + i18labels.PRINTOPTS_PERROW + ": 1</option>");
@@ -3201,7 +3206,10 @@ var VesselsApp2D = (function () {
                 j = undefined,
                 lenJ = undefined,
                 positionsX = [0],
+                positionsY = [0],
+                positions = [],
                 bayW = undefined,
+                bayWTotal = undefined,
                 bayH = undefined,
                 nextBayH = undefined,
                 contHeight = 8,
@@ -3220,9 +3228,9 @@ var VesselsApp2D = (function () {
                 pageY = undefined,
                 divForm = this._node.divForm,
                 divProgress = this._node.divProgress,
-                labelsTopHeight = 5,
-                labelsLeftWidth = 5,
-                extraOOGratio = 1 / 4,
+                labelsTopHeight = this.options.extraSpace.labelsTopHeight,
+                labelsLeftWidth = this.options.extraSpace.labelsLeftWidth,
+                extraOOGratio = this.options.extraSpace.extraOOGratio,
                 extraHbase = undefined,
                 extraWbase = undefined,
                 boxW = undefined,
@@ -3230,7 +3238,9 @@ var VesselsApp2D = (function () {
                 boxTimesH = undefined,
                 boxTop = undefined,
                 boxLeft = undefined,
-                fontFactor = 1;
+                legendCanvases = undefined,
+                fontFactor = 1,
+                doLog = true;
 
             function drawContainer(obj) {
                 var inchFactor = arguments.length <= 1 || arguments[1] === undefined ? me.inchFactor : arguments[1];
@@ -3280,7 +3290,7 @@ var VesselsApp2D = (function () {
                 }
 
                 if (txt) {
-                    var calcFactor = fontFactor * inchFactor / me.inchFactor;
+                    var calcFactor = inchFactor / 4;
                     if (rws < 7) {
                         calcFactor = calcFactor + (8 - rws) * 0.2;
                     }
@@ -3306,24 +3316,12 @@ var VesselsApp2D = (function () {
                     //High-cube
                     ctx.fillStyle = "#333333";
                     ctx.beginPath();
-                    //ctx.rect(5 * inchFactor, 0, 2 * inchFactor, 2 * inchFactor);
                     ctx.moveTo(contWidth * inchFactor * 3 / 4, 0);
                     ctx.lineTo(contWidth * inchFactor, contHeight * inchFactor / 3);
                     ctx.lineTo(contWidth * inchFactor / 2, contHeight * inchFactor / 3);
                     ctx.lineTo(contWidth * inchFactor * 3 / 4, 0);
-                    //ctx.lineTo(0, contHeight * inchFactor);
-                    //ctx.lineTo(0, contHeight * inchFactor / 2);
-                    //ctx.lineTo(0, contHeight * inchFactor / 2);               
                     ctx.fill();
                 }
-
-                /*
-                if (obj.x) { //OOG
-                    ctx.fillStyle = "#333333";
-                    ctx.beginPath();
-                    ctx.arc(contWidth * inchFactor, contHeight * inchFactor / 4 * 3, 2 * inchFactor, 0, 1.5 * Math.PI);
-                    ctx.fill();
-                }*/
 
                 switch (obj.l) {//Length
                     case 40:
@@ -3430,11 +3428,13 @@ var VesselsApp2D = (function () {
                     calcFactor = undefined,
                     contWidthCenter = Math.round(contWidth / 2) * me.inchFactor,
                     contHeightFactored = contHeight * me.inchFactor,
-                    contWidthFactored = contWidth * me.inchFactor;
+                    contWidthFactored = contWidth * me.inchFactor,
+                    doLog = true;
 
                 cnv = document.createElement("canvas");
-                cnv.width = bayW + labelsLeftWidth * 2 * me.inchFactor;
+                cnv.width = bayWTotal;
                 cnv.height = maxH * me.inchFactor + labelsTopHeight * 2 * me.inchFactor;
+
                 ctx = cnv.getContext("2d");
 
                 if (dataBay.isBlockStart && dataBay.maxD > 20) {
@@ -3455,7 +3455,7 @@ var VesselsApp2D = (function () {
                 ctx.font = 24 * calcFactor + "px Georgia";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
-                ctx.fillText(titleT, bayW / 2, Math.max(labelsTopHeight / 2 * me.inchFactor, 0));
+                ctx.fillText(titleT, bayWTotal / 2, Math.max(labelsTopHeight / 2 * me.inchFactor, 0));
 
                 ctx.font = 10 * calcFactor + "px Arial";
                 ctx.textAlign = "center";
@@ -3468,10 +3468,11 @@ var VesselsApp2D = (function () {
                 console.log("Step 1, Bay " + key);
 
                 //Grid & Numbering
+                x = Math.floor((_.max(mapCells) + contWidth + labelsLeftWidth * 1.5) * me.inchFactor);
                 for (t in mapTiers) {
-                    y = (mapTiers[t] - contHeight + labelsTopHeight) * me.inchFactor;
-                    ctx.fillText(__s__.pad(t, 2), labelsLeftWidth / 2 * me.inchFactor, (contHeightFactored + 6) / 2 + y);
-                    ctx.fillText(__s__.pad(t, 2), (_.max(mapCells) + contWidth + labelsLeftWidth * 1.5) * me.inchFactor, (contHeightFactored + 6) / 2 + y);
+                    y = (mapTiers[t] - contHeight + labelsTopHeight) * me.inchFactor + (contHeightFactored + 6) / 2;
+                    ctx.fillText(__s__.pad(t, 2), labelsLeftWidth / 2 * me.inchFactor, y);
+                    ctx.fillText(__s__.pad(t, 2), x, y);
                 }
                 for (c in mapCells) {
                     x = (mapCells[Number(c)] + labelsLeftWidth) * me.inchFactor;
@@ -3556,7 +3557,7 @@ var VesselsApp2D = (function () {
                     if (columns > 0 && columns % 2 === 0) {
                         //create new canvas
                         cnv = document.createElement("canvas");
-                        cnv.width = (bayW + labelsLeftWidth * 2 * me.inchFactor) * 1.5;
+                        cnv.width = bayWTotal * 1.5;
                         cnv.height = maxH * me.inchFactor + labelsTopHeight * 2 * me.inchFactor;
                         ctx = cnv.getContext("2d");
                         ctx.font = 19 * calcFactor + "px Arial";
@@ -3583,7 +3584,7 @@ var VesselsApp2D = (function () {
                 }
 
                 cnv = document.createElement("canvas");
-                cnv.width = (bayW + labelsLeftWidth * 2 * me.inchFactor) * 1.5;
+                cnv.width = bayWTotal * 1.5;
                 cnv.height = maxH * me.inchFactor + labelsTopHeight * 2 * me.inchFactor;
                 ctx = cnv.getContext("2d");
                 canvases.push(cnv);
@@ -3760,37 +3761,55 @@ var VesselsApp2D = (function () {
             }
 
             maxH = (data.belowTiers.n + data.aboveTiers.n) * contHeight + aboveBelowSep * 2 + 2 * labelsTopHeight;
-            maxW = data.maxWidth * contWidth + 2 * labelsLeftWidth;
-            bayW = Math.floor(width / (rws * (1 + optsPaddingW)));
-            paddingW = Math.floor(bayW * optsPaddingW);
+            maxW = (data.maxWidth + (hasZeroCell ? 1 : 0)) * contWidth + 2 * labelsLeftWidth;
+            bayWTotal = Math.floor(width / (rws * (1 + optsPaddingW)));
+            paddingW = Math.floor(bayWTotal * optsPaddingW);
 
             //Line width (depends on the resolution)
             this.lineWidth = Math.round(res / 300);
 
             //Pixels per inch factor
-            this.inchFactor = bayW / maxW; // (1 / Math.max(maxH / height, maxW / bayW));
+            this.inchFactor = bayWTotal / maxW; // (1 / Math.max(maxH / height, maxW / bayW));
             fontFactor = res / 300;
+
+            bayW = Math.floor(bayWTotal - labelsLeftWidth * 2 * me.inchFactor);
 
             //Extra size for OOG
             extraHbase = contHeight * extraOOGratio * me.inchFactor;
             extraWbase = contWidth * extraOOGratio * me.inchFactor;
 
-            //Positions in pixels for each Bay
-            for (j = 1; j < rws; j += 1) {
-                positionsX[j] = positionsX[j - 1] + bayW + paddingW;
-            }
-
             //Bay dimensions
-            bayH = (maxH + contHeight) * this.inchFactor;
-            nextBayH = bayH + me.options.padding.h * this.inchFactor;
-            boxW = bayW * rws + paddingW * (rws - 1);
+            bayH = Math.floor((maxH + contHeight) * me.inchFactor);
+            nextBayH = Math.floor(bayH + me.options.padding.h * me.inchFactor);
+            boxW = bayWTotal * rws + paddingW * (rws - 1);
 
             boxTimesH = Math.min(Math.floor(height / nextBayH), Math.ceil(dataStructuredKeysArr.length / rws));
-            boxH = boxTimesH * bayH + (boxTimesH - 1) * me.options.padding.h * this.inchFactor;
+            boxH = Math.floor(boxTimesH * bayH + (boxTimesH - 1) * me.options.padding.h * me.inchFactor);
 
             boxTop = Math.round((height - boxH) / 2);
             boxLeft = Math.round((width - boxW) / 2);
 
+            //Positions in pixels for each Bay
+            positionsX[0] = 0;
+            positionsY[0] = 0;
+            legendCanvases = drawLegend();
+            positions = [{ x: 0, y: 0 }];
+
+            for (j = 1, lenJ = dataStructuredKeysArr.length + legendCanvases.length; j < lenJ; j += 1) {
+                positionsY[j] = positionsY[j - 1];
+                positionsX[j] = positionsX[j - 1] + bayWTotal + paddingW;
+
+                if (j % rws === 0) {
+                    positionsY[j] = positionsY[j - 1] + nextBayH;
+                    positionsX[j] = 0;
+                }
+                if (positionsY[j] + nextBayH > height) {
+                    positionsY[j] = 0;
+                }
+                positions.push({ x: positionsX[j], y: positionsY[j] });
+            }
+
+            //console.log("Positions", positions);
             //console.log("Dimensions", { bayW, bayH, nextBayH, boxW, boxH, boxLeft, boxTop });
 
             //Cells positions
@@ -3829,59 +3848,43 @@ var VesselsApp2D = (function () {
             pageY = 0;
 
             setTimeout(function () {
+                var lenJ = dataStructuredKeysArr.length,
+                    lenK = legendCanvases.length,
+                    nX = undefined;
                 //Iterate bays & pages
-                for (var _j = 0, _lenJ = dataStructuredKeysArr.length; _j < _lenJ; _j += 1) {
-                    var bayInfo = dataStructuredKeysArr[_j];
+                for (var _j = 0; _j < lenJ; _j += 1) {
+                    var bayInfo = dataStructuredKeysArr[_j],
+                        im = undefined;
                     if (!bayInfo) {
                         continue;
                     }
 
-                    var im = drawBay(dataStructuredKeysArr[_j]);
-                    ctxPage.drawImage(im, positionsX[_j % rws] + boxLeft, pageY + boxTop);
-
-                    if ((_j + 1) % rws === 0 || _j + 1 === _lenJ) {
-                        pageY += nextBayH;
-                        if (pageY + nextBayH > height || _j + 1 === _lenJ) {
-
-                            bayImages.push(canvasPage);
-
-                            if (_j + 1 < _lenJ) {
-                                canvasPage = document.createElement("canvas");
-                                canvasPage.width = width;canvasPage.height = height;
-                                ctxPage = canvasPage.getContext("2d");
-                                pageY = 0;
-                            } else {
-                                if ((_j + 1) % rws !== 0) {
-                                    pageY -= nextBayH;
-                                }
-
-                                var canvases = drawLegend(),
-                                    nX = undefined;
-                                for (var k = 0, lenK = canvases.length; k < lenK; k += 1) {
-                                    nX = _j + k + 1;
-                                    if (pageY + nextBayH > height) {
-                                        canvasPage = document.createElement("canvas");
-                                        canvasPage.width = width;canvasPage.height = height;
-                                        ctxPage = canvasPage.getContext("2d");
-                                        pageY = 0;
-                                        bayImages.push(canvasPage);
-                                    }
-
-                                    ctxPage.drawImage(canvases[k], Math.round(positionsX[nX % rws] + boxLeft), Math.round(pageY + boxTop));
-
-                                    if (nX % rws === rws) {
-                                        pageY += nextBayH;
-                                    }
-                                }
-                            }
-                            //break; //Uncomment to generate only 1 page (for testing purposes)
-                        }
+                    if (positions[_j].x === 0 && positions[_j].y === 0) {
+                        canvasPage = document.createElement("canvas");
+                        canvasPage.width = width;canvasPage.height = height;
+                        ctxPage = canvasPage.getContext("2d");
+                        bayImages.push(canvasPage);
                     }
+
+                    im = drawBay(dataStructuredKeysArr[_j]);
+                    ctxPage.drawImage(im, positions[_j].x + boxLeft, positions[_j].y + boxTop);
+                }
+
+                for (var k = 0; k < lenK; k += 1) {
+                    nX = lenJ + k;
+                    if (positions[nX].x === 0 && positions[nX].y === 0) {
+                        canvasPage = document.createElement("canvas");
+                        canvasPage.width = width;canvasPage.height = height;
+                        ctxPage = canvasPage.getContext("2d");
+                        bayImages.push(canvasPage);
+                    }
+
+                    ctxPage.drawImage(legendCanvases[k], Math.round(positions[nX].x + boxLeft), Math.round(positions[nX].y + boxTop));
                 }
 
                 divProgress.innerHTML = i18labels.PRINTOPTS_SENDINGPAGES;
                 sendPagesToServer();
-            }, 50);
+            }, 500);
 
             window.pagess = bayImages;
         }

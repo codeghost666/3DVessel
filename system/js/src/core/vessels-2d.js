@@ -27,6 +27,11 @@ export class VesselsApp2D {
                 { name: "300 dpi", res: 300 },
                 { name: "150 dpi", res: 150 }
             ],
+            extraSpace: { 
+                labelsTopHeight: 5,
+                labelsLeftWidth: 5,
+                extraOOGratio: 1 / 4
+            },
             padding: { w: 0.06, h: 15.0 },
             aboveBelowSep: 2,
         }, opts);
@@ -189,7 +194,7 @@ export class VesselsApp2D {
             optsPaddingW = this.options.padding.w, paddingW;
 
         this.width =  res * size[this._node.dropdwnOr.value === "1" ? "w" : "h"];
-        this.height = res * size[this._node.dropdwnOr.value !== "1" ? "w" : "h"];
+        this.height = res * size[this._node.dropdwnOr.value !== "1" ? "w" : "h"] - 1;
 
         arrLis = [];
         arrLis.push("<option value='1'>" + i18labels.PRINTOPTS_PERROW + ": 1</option>");
@@ -256,20 +261,23 @@ export class VesselsApp2D {
             hasZeroCell = data.hasZeroCell,
             maxH, maxW, j, lenJ,
             positionsX = [0],
-            bayW, bayH, nextBayH,
+            positionsY = [0],
+            positions = [],
+            bayW, bayWTotal, bayH, nextBayH,
             contHeight = 8, contWidth = 8,
             paddingW, optsPaddingW = me.options.padding.w,
             maxCell, cellsWidth, mapCells = {}, mapTiers = {}, tierH = 0,
             bayImages = [], canvasPage, ctxPage, pageX, pageY,
             divForm = this._node.divForm,
             divProgress = this._node.divProgress,
-            labelsTopHeight = 5,
-            labelsLeftWidth = 5,
-            extraOOGratio = 1 / 4,
+            labelsTopHeight = this.options.extraSpace.labelsTopHeight,
+            labelsLeftWidth = this.options.extraSpace.labelsLeftWidth,
+            extraOOGratio = this.options.extraSpace.extraOOGratio,
             extraHbase, 
             extraWbase,            
-            boxW, boxH, boxTimesH, boxTop, boxLeft,    
-            fontFactor = 1;
+            boxW, boxH, boxTimesH, boxTop, boxLeft,  
+            legendCanvases,  
+            fontFactor = 1, doLog = true;
 
         function drawContainer(obj, inchFactor = me.inchFactor, noColor = false, onlyPlus = false) {
             let canvas = document.createElement("canvas"), ctx, color, txt; 
@@ -310,7 +318,7 @@ export class VesselsApp2D {
             }
 
             if (txt) {
-                let calcFactor = fontFactor * inchFactor / me.inchFactor;
+                let calcFactor = inchFactor / 4;
                 if (rws < 7) { calcFactor = calcFactor + (8 - rws) * 0.2; }
                 ctx.font = (14 * calcFactor) + "px Arial";
                 ctx.textAlign = "center";
@@ -332,24 +340,12 @@ export class VesselsApp2D {
             if (obj.h === 9.5) { //High-cube
                 ctx.fillStyle = "#333333";
                 ctx.beginPath();
-                //ctx.rect(5 * inchFactor, 0, 2 * inchFactor, 2 * inchFactor);
                 ctx.moveTo(contWidth * inchFactor * 3 / 4, 0);
                 ctx.lineTo(contWidth * inchFactor, contHeight * inchFactor / 3);
                 ctx.lineTo(contWidth * inchFactor / 2, contHeight * inchFactor / 3);
                 ctx.lineTo(contWidth * inchFactor * 3 / 4, 0);
-                //ctx.lineTo(0, contHeight * inchFactor);
-                //ctx.lineTo(0, contHeight * inchFactor / 2);
-                //ctx.lineTo(0, contHeight * inchFactor / 2);                
                 ctx.fill();
             }
-
-            /*
-            if (obj.x) { //OOG
-                ctx.fillStyle = "#333333";
-                ctx.beginPath();
-                ctx.arc(contWidth * inchFactor, contHeight * inchFactor / 4 * 3, 2 * inchFactor, 0, 1.5 * Math.PI);
-                ctx.fill();
-            }*/
 
             switch (obj.l) { //Length
                 case 40:
@@ -438,11 +434,12 @@ export class VesselsApp2D {
                 cnv, ctx, y, x, titleT = key, calcFactor,    
                 contWidthCenter = Math.round(contWidth / 2) * me.inchFactor,
                 contHeightFactored = contHeight * me.inchFactor,
-                contWidthFactored = contWidth * me.inchFactor;
+                contWidthFactored = contWidth * me.inchFactor, doLog = true;
 
             cnv = document.createElement("canvas");
-            cnv.width = (bayW + labelsLeftWidth * 2 * me.inchFactor);
+            cnv.width = bayWTotal;
             cnv.height = (maxH * me.inchFactor + labelsTopHeight * 2 * me.inchFactor);
+            
             ctx = cnv.getContext("2d");
 
             if (dataBay.isBlockStart && dataBay.maxD > 20) {
@@ -461,7 +458,7 @@ export class VesselsApp2D {
             ctx.font = (24 * calcFactor) + "px Georgia";
             ctx.textAlign = "center";
             ctx.textBaseline="middle"; 
-            ctx.fillText(titleT, bayW / 2, Math.max(labelsTopHeight / 2 * me.inchFactor, 0));
+            ctx.fillText(titleT, bayWTotal / 2, Math.max(labelsTopHeight / 2 * me.inchFactor, 0));
 
             ctx.font = (10 * calcFactor) + "px Arial";
             ctx.textAlign = "center";
@@ -474,10 +471,11 @@ export class VesselsApp2D {
             console.log( "Step 1, Bay " + key);
 
             //Grid & Numbering
+            x = Math.floor((_.max(mapCells) + contWidth + labelsLeftWidth * 1.5) * me.inchFactor);
             for (t in mapTiers) {
-                y = (mapTiers[t] - contHeight + labelsTopHeight) * me.inchFactor;
-                ctx.fillText(__s__.pad(t, 2), labelsLeftWidth / 2 * me.inchFactor, (contHeightFactored + 6) / 2 + y);
-                ctx.fillText(__s__.pad(t, 2), (_.max(mapCells) + contWidth + labelsLeftWidth * 1.5) * me.inchFactor, (contHeightFactored + 6) / 2 + y);
+                y = (mapTiers[t] - contHeight + labelsTopHeight) * me.inchFactor + (contHeightFactored + 6) / 2;
+                ctx.fillText(__s__.pad(t, 2), labelsLeftWidth / 2 * me.inchFactor, y);
+                ctx.fillText(__s__.pad(t, 2), x, y);
             } 
             for (c in mapCells) {
                 x = (mapCells[Number(c)] + labelsLeftWidth) * me.inchFactor;
@@ -554,7 +552,7 @@ export class VesselsApp2D {
                 if (columns > 0 && columns % 2 === 0) {
                     //create new canvas
                     cnv = document.createElement("canvas");
-                    cnv.width = (bayW + labelsLeftWidth * 2 * me.inchFactor) * 1.5;
+                    cnv.width = bayWTotal * 1.5;
                     cnv.height = (maxH * me.inchFactor + labelsTopHeight * 2 * me.inchFactor);
                     ctx = cnv.getContext("2d");
                     ctx.font = (19 * calcFactor) + "px Arial";
@@ -577,7 +575,7 @@ export class VesselsApp2D {
             }
 
             cnv = document.createElement("canvas");
-            cnv.width = (bayW + labelsLeftWidth * 2 * me.inchFactor) * 1.5;
+            cnv.width = bayWTotal * 1.5;
             cnv.height = (maxH * me.inchFactor + labelsTopHeight * 2 * me.inchFactor);
             ctx = cnv.getContext("2d");
             canvases.push(cnv);
@@ -737,35 +735,53 @@ export class VesselsApp2D {
         }    
 
         maxH = (data.belowTiers.n + data.aboveTiers.n) * contHeight + aboveBelowSep * 2 + 2 * labelsTopHeight;
-        maxW = data.maxWidth * contWidth + 2 * labelsLeftWidth;
-        bayW = Math.floor(width / (rws * (1 + optsPaddingW)));
-        paddingW = Math.floor(bayW * optsPaddingW);
+        maxW = (data.maxWidth + (hasZeroCell ? 1 : 0)) * contWidth + 2 * labelsLeftWidth;
+        bayWTotal = Math.floor(width / (rws * (1 + optsPaddingW)));
+        paddingW = Math.floor(bayWTotal * optsPaddingW);
 
         //Line width (depends on the resolution)
         this.lineWidth = Math.round(res / 300);
 
         //Pixels per inch factor
-        this.inchFactor = bayW / maxW; // (1 / Math.max(maxH / height, maxW / bayW));
+        this.inchFactor = bayWTotal / maxW; // (1 / Math.max(maxH / height, maxW / bayW));
         fontFactor = res / 300;
+
+        bayW = Math.floor(bayWTotal - labelsLeftWidth * 2 * me.inchFactor);
 
         //Extra size for OOG
         extraHbase = contHeight * extraOOGratio * me.inchFactor;
         extraWbase = contWidth * extraOOGratio * me.inchFactor;       
 
-        //Positions in pixels for each Bay
-        for(j = 1; j < rws; j += 1) { positionsX[j] = positionsX[j - 1] + bayW + paddingW; }
-
         //Bay dimensions
-        bayH = (maxH + contHeight) * this.inchFactor;
-        nextBayH = bayH + me.options.padding.h * this.inchFactor;
-        boxW = bayW * rws + paddingW * (rws - 1);
+        bayH = Math.floor((maxH + contHeight) * me.inchFactor);
+        nextBayH = Math.floor(bayH + me.options.padding.h * me.inchFactor);
+        boxW = bayWTotal * rws + paddingW * (rws - 1);
 
         boxTimesH = Math.min(Math.floor(height / nextBayH), Math.ceil(dataStructuredKeysArr.length / rws));
-        boxH = boxTimesH * bayH + (boxTimesH - 1) * me.options.padding.h * this.inchFactor;
+        boxH = Math.floor(boxTimesH * bayH + (boxTimesH - 1) * me.options.padding.h * me.inchFactor);
 
         boxTop  = Math.round((height - boxH) / 2);
         boxLeft = Math.round((width - boxW) / 2);
 
+        //Positions in pixels for each Bay
+        positionsX[0] = 0;
+        positionsY[0] = 0;
+        legendCanvases = drawLegend();
+        positions = [{x: 0, y: 0}];
+        
+        for(j = 1, lenJ = dataStructuredKeysArr.length + legendCanvases.length; j < lenJ; j += 1) {
+            positionsY[j] = positionsY[j - 1];
+            positionsX[j] = positionsX[j - 1] + bayWTotal + paddingW;
+            
+            if (j % rws === 0) { 
+                positionsY[j] = positionsY[j - 1] + nextBayH;
+                positionsX[j] = 0;
+            }
+            if (positionsY[j] + nextBayH > height) { positionsY[j] = 0; }
+            positions.push( { x: positionsX[j], y: positionsY[j] });
+        }
+
+        //console.log("Positions", positions);
         //console.log("Dimensions", { bayW, bayH, nextBayH, boxW, boxH, boxLeft, boxTop });
 
         //Cells positions
@@ -801,56 +817,43 @@ export class VesselsApp2D {
         pageY = 0;
 
         setTimeout(function() {
+            let lenJ = dataStructuredKeysArr.length,
+                lenK = legendCanvases.length,
+                nX;
             //Iterate bays & pages
-            for (let j = 0, lenJ = dataStructuredKeysArr.length ; j < lenJ; j += 1) {
-                let bayInfo = dataStructuredKeysArr[j];
+            for (let j = 0; j < lenJ; j += 1) {
+                let bayInfo = dataStructuredKeysArr[j], im;
                 if (!bayInfo) { continue;} 
 
-                let im = drawBay(dataStructuredKeysArr[j]);
-                ctxPage.drawImage(im, positionsX[j % rws] + boxLeft, pageY + boxTop);
-
-                if ((j+1) % rws === 0 || (j + 1) === lenJ) {
-                    pageY += nextBayH;
-                    if (pageY + nextBayH > height || (j + 1) === lenJ) { 
-                        
-                        bayImages.push(canvasPage);
-                        
-                        if (j + 1 < lenJ) {
-                            canvasPage = document.createElement("canvas");
-                            canvasPage.width = width; canvasPage.height = height;
-                            ctxPage = canvasPage.getContext("2d");
-                            pageY = 0;
-                        } else {
-                            if ((j+1) % rws !== 0) { pageY -= nextBayH; }  
-
-                            let canvases = drawLegend(), nX;
-                            for (let k = 0, lenK = canvases.length; k < lenK; k += 1) {
-                                nX = j + k + 1;
-                                if (pageY + nextBayH > height) {
-                                    canvasPage = document.createElement("canvas");
-                                    canvasPage.width = width; canvasPage.height = height;
-                                    ctxPage = canvasPage.getContext("2d");
-                                    pageY = 0;
-                                    bayImages.push(canvasPage);
-                                }
-                                
-                                ctxPage.drawImage(canvases[k], 
-                                    Math.round(positionsX[nX % rws] + boxLeft), 
-                                    Math.round(pageY + boxTop));
-
-                                if (nX % rws === rws) { pageY += nextBayH; }
-
-                            }
-                        }
-                        //break; //Uncomment to generate only 1 page (for testing purposes)
-                    }
+                if (positions[j].x === 0 && positions[j].y === 0) {
+                    canvasPage = document.createElement("canvas");
+                    canvasPage.width = width; canvasPage.height = height;
+                    ctxPage = canvasPage.getContext("2d");
+                    bayImages.push(canvasPage);
                 }
+                
+                im = drawBay(dataStructuredKeysArr[j]);
+                ctxPage.drawImage(im, positions[j].x + boxLeft, positions[j].y + boxTop);
+            }
+
+            for (let k = 0; k < lenK; k += 1) {
+                nX = lenJ + k;
+                if (positions[nX].x === 0 && positions[nX].y === 0) {
+                    canvasPage = document.createElement("canvas");
+                    canvasPage.width = width; canvasPage.height = height;
+                    ctxPage = canvasPage.getContext("2d");
+                    bayImages.push(canvasPage);
+                }
+                
+                ctxPage.drawImage(legendCanvases[k], 
+                    Math.round(positions[nX].x + boxLeft), 
+                    Math.round(positions[nX].y + boxTop));
             }
 
             divProgress.innerHTML = i18labels.PRINTOPTS_SENDINGPAGES;
             sendPagesToServer();
 
-        }, 50);
+        }, 500);
 
         window.pagess = bayImages;
     }
