@@ -258,11 +258,13 @@ var ColorsWidget = (function () {
                 this._node.colorPickerJoe = colorjoe.rgb(this._node.colorPickerDiv, firstLi.getAttribute("data-color"), ['hex']);
                 this._node.colorPickerJoe.on("change", function (color) {
                     var optionValue = me._currentOption.id.replace("liColor_", ""),
-                        prevVal = me._currentOption.getAttribute("data-color");;
-                    me._currentOption.setAttribute("data-color", color.hex());
-                    me._currentOption.getElementsByTagName("SPAN")[0].style.background = color.hex();
-                    me._node.colorsTemp[optionValue] = color.hex();
-                    if (prevVal !== color.hex() && me._currentOption.className.indexOf("customized") < 0) {
+                        prevVal = me._currentOption.getAttribute("data-color"),
+                        newVal = color.hex();
+
+                    me._currentOption.setAttribute("data-color", newVal);
+                    me._currentOption.getElementsByTagName("SPAN")[0].style.background = newVal;
+                    me._node.colorsTemp[optionValue] = newVal;
+                    if (prevVal !== newVal && me._currentOption.className.indexOf("customized") < 0) {
                         me._currentOption.className += " customized";
                     }
                 });
@@ -294,9 +296,18 @@ var ColorsWidget = (function () {
             }
 
             setTimeout(function () {
+                var newVal = li.getAttribute("data-color");
+
                 li.className += " selected";
-                me._node.colorPickerJoe.set(li.getAttribute("data-color"), true);
+                me._node.colorPickerJoe.set(newVal, true);
                 me._currentOption = li;
+
+                setTimeout(function () {
+                    var hex = me._node.colorPickerJoe.e.getElementsByTagName("INPUT");
+                    if (hex && hex.length > 0) {
+                        hex[0].value = newVal;
+                    }
+                }, 150);
             }, 150);
         }
     }, {
