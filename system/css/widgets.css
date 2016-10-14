@@ -3,8 +3,8 @@
   top: 50%;
   left: 50%;
   width: 550px;
-  min-height: 350px;
-  margin: -175px 0 0 -275px;
+  min-height: 330px;
+  margin: -165px 0 0 -275px;
   box-sizing: border-box;
   padding: 15px;
   box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.3);
@@ -14,8 +14,13 @@
   font-family: Arial, Helvetica, sans-serif;
   line-height: 1.6em; }
   .colors-container h2 {
-    font-size: 15px;
-    margin: 0 0 10px 0; }
+    font-size: 16px;
+    margin: 0 0 10px 0;
+    line-height: 1.3em; }
+    .colors-container h2 em {
+      font-weight: normal;
+      color: #060;
+      font-size: 15px; }
   .colors-container .colors-container-top {
     float: left;
     width: 100%;
@@ -67,10 +72,11 @@
   .colors-container .colors-container-colorPicker {
     float: left;
     width: 42%;
-    height: 160px;
+    min-height: 160px;
     box-sizing: border-box;
     margin-left: 8%;
-    margin-top: 10px; }
+    margin-top: 10px;
+    height: auto; }
 
 .printopts-container {
   position: fixed;

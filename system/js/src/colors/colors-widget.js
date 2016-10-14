@@ -183,7 +183,7 @@ export class ColorsWidget {
         
         //Initialize colorPicker
         if (!this._node.colorPickerJoe) {
-            this._node.colorPickerJoe = colorjoe.rgb(this._node.colorPickerDiv, firstLi.getAttribute("data-color"));
+            this._node.colorPickerJoe = colorjoe.rgb(this._node.colorPickerDiv, firstLi.getAttribute("data-color"), ['hex']);
             this._node.colorPickerJoe.on("change", function(color) {
                 let optionValue = me._currentOption.id.replace("liColor_", ""),
                     prevVal = me._currentOption.getAttribute("data-color");;

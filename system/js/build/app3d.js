@@ -1310,7 +1310,7 @@ var ColorsWidget = (function () {
 
             //Initialize colorPicker
             if (!this._node.colorPickerJoe) {
-                this._node.colorPickerJoe = colorjoe.rgb(this._node.colorPickerDiv, firstLi.getAttribute("data-color"));
+                this._node.colorPickerJoe = colorjoe.rgb(this._node.colorPickerDiv, firstLi.getAttribute("data-color"), ['hex']);
                 this._node.colorPickerJoe.on("change", function (color) {
                     var optionValue = me._currentOption.id.replace("liColor_", ""),
                         prevVal = me._currentOption.getAttribute("data-color");;
@@ -1785,7 +1785,7 @@ exports.INVALID_DATA_SOURCE = INVALID_DATA_SOURCE;
 var ERROR_PARSING_JSON = "Error while parsing the JSON file.";
 
 exports.ERROR_PARSING_JSON = ERROR_PARSING_JSON;
-var CLICK_TO_CHANGE_COLORS = "Click on colors to change them. A black dot means there is already a custom colour being used.";
+var CLICK_TO_CHANGE_COLORS = "Click on colors to change them. <br /><em>A black dot means there is already a custom colour being used.</em>";
 exports.CLICK_TO_CHANGE_COLORS = CLICK_TO_CHANGE_COLORS;
 var NO_COLOR_SETTINGS = "No color settings found. Will use random.";
 

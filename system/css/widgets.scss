@@ -1,20 +1,21 @@
 $colorInfo: #000;
 
 .colors-container {
-    position:fixed; top:50%; left:50%; width:550px; min-height: 350px; margin:-175px 0 0 -275px;
+    position:fixed; top:50%; left:50%; width:550px; min-height: 330px; margin:-165px 0 0 -275px;
     box-sizing: border-box; padding:15px;
     box-shadow: 0 0 10px 5px rgba(0,0,0,0.3);
     background: #ffffff; border:6px solid lighten($colorInfo, 80%); display: none;
     font-family: Arial, Helvetica, sans-serif; line-height: 1.6em;
 
-    h2 { font-size: 15px; margin:0 0 10px 0;}
+    h2 { font-size: 16px; margin:0 0 10px 0; line-height: 1.3em;
+        em { font-weight: normal; color:#060; font-size: 15px; }
+    }
 
     .colors-container-top { float:left; width: 100%; margin-bottom:10px;}
-
+ 
     .colors-container-ulColors {
         background: #eee; padding:3px 10px 10px 10px;box-sizing: border-box; 
-        float:left; clear:left; width:50%;
-        list-style: none; margin: 10px 0 0 0;  
+        float:left; clear:left; width:50%; list-style: none; margin: 10px 0 0 0;  
         li { float:left; margin:7px 7px 0 0; font-size: 12px; padding-left: 24px; color:#222;
             line-height: 20px; position: relative; background: #fff; border-radius: 3px; overflow: hidden;
             border: 1px solid #ccc; cursor: pointer;
@@ -31,7 +32,7 @@ $colorInfo: #000;
 
     .colorPicker,
     .colors-container-colorPicker {
-        float:left; width:42%; height: 160px; box-sizing: border-box; margin-left:8%; margin-top:10px;
+        float:left; width:42%; min-height: 160px; box-sizing: border-box; margin-left:8%; margin-top:10px; height:auto;
     }
 } 
 
