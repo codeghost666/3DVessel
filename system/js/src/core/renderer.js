@@ -350,7 +350,7 @@ export class Renderer3D {
             x = (iCell % 2 === 0 ? (iCell / 2) : -(iCell + 1) / 2) * (8 + extraSep); // x coordinate
             
             iTier = Number(point.tier); // y coordinate                
-            if (iTier >= 78) {
+            if (iTier >= 70) {
                 y = (iTier - iTierMinAbove) / 2 * (9.5 + extraSep) + floorAbove;
             } else {
                 y = (iTier - iTierMin) / 2 * (9.5 + extraSep) - floorBelow;
