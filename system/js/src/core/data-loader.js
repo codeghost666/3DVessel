@@ -119,7 +119,7 @@ export class DataLoader {
 
             if (maxWidth < dataStructured[bay2].n) { maxWidth = dataStructured[bay2].n; }
             if (ob.depth > dataStructured[bay2].maxD) { dataStructured[bay2].maxD = ob.depth; }
-            if (obj.tier < "78") {
+            if (obj.tier < "70") {
                 if(!belowTiers.tiers[obj.tier]) {
                     belowTiers.tiers[obj.tier] = { h: ob.h, accH: 0 };
                     belowTiers.n += 1;
