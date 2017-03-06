@@ -1601,7 +1601,7 @@ var DataLoader = (function () {
                 if (ob.depth > dataStructured[bay2].maxD) {
                     dataStructured[bay2].maxD = ob.depth;
                 }
-                if (obj.tier < "78") {
+                if (obj.tier < "70") {
                     if (!belowTiers.tiers[obj.tier]) {
                         belowTiers.tiers[obj.tier] = { h: ob.h, accH: 0 };
                         belowTiers.n += 1;
@@ -2339,7 +2339,7 @@ var Renderer3D = (function () {
                 x = (iCell % 2 === 0 ? iCell / 2 : -(iCell + 1) / 2) * (8 + extraSep); // x coordinate
 
                 iTier = Number(point.tier); // y coordinate               
-                if (iTier >= 78) {
+                if (iTier >= 70) {
                     y = (iTier - iTierMinAbove) / 2 * (9.5 + extraSep) + floorAbove;
                 } else {
                     y = (iTier - iTierMin) / 2 * (9.5 + extraSep) - floorBelow;
