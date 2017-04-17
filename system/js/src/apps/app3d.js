@@ -52,6 +52,13 @@ controlsControl = {
         me.checkboxHatchCovers = document.getElementById("view-hcs");
         me.navBaysNext = document.getElementById("bay-next");
         me.navBaysPrev = document.getElementById("bay-prev");
+
+        //added by swell
+        me.multiContainer   = document.getElementById("btn_find_multi");
+        me.closeMultipopup  = document.getElementById("btn_close");
+        me.btnApplyFilter   = document.getElementById("btn_apply_filter");
+        me.btnClearFilter   = document.getElementById("btn_clear_filter");
+        //added end
         
         opt = document.createElement("option");
         opt.value = ""; opt.innerHTML = "None";
@@ -84,11 +91,80 @@ controlsControl = {
         __d__.addEventLnr(me.navBaysNext, "click", function() { __s__.callOnCondition(me.isExpanded, me.expandViewNext, me.baysControlNext)} );
         __d__.addEventLnr(me.navBaysPrev, "click", function() { __s__.callOnCondition(me.isExpanded, me.expandViewPrev, me.baysControlPrev)} );
 
+        //added by swell
+        __d__.addEventLnr(me.multiContainer, "click", function () 
+        {
+            $("#search_popup").fadeIn();
+            $("#search_content").focus();
+        });
+
+        __d__.addEventLnr(me.closeMultipopup, "click", function () 
+        {
+            $("#search_popup").fadeOut();
+        });
+
+        __d__.addEventLnr(me.btnClearFilter, "click", function () 
+        {
+            me.showHiddenMeshes();
+            $("#search_content").val("");
+            $("#search_popup").fadeOut();
+        });
+
+        __d__.addEventLnr(me.btnApplyFilter, "click", function () 
+        {
+            var filter_data = $("#search_content").val();
+            var filter_arr  = [];
+            var currentlyHidden = [];
+
+            filter_data = me.replaceAll(filter_data, " ", ",");
+            filter_data = me.replaceAll(filter_data, "||", ",");
+            filter_data = me.replaceAll(filter_data, "|", ",");
+            filter_data = me.replaceAll(filter_data, ";", ",");
+            filter_data = me.replaceAll(filter_data, "\n", ",");
+
+            filter_arr = filter_data.split(",");
+
+            me.showHiddenMeshes();
+
+            $.each(app3d.data.allContainerMeshesObj, function(key, mesh)
+            {
+                if($.inArray(key, filter_arr) == -1)
+                {
+                    if (me.showWireframes.checked) 
+                    {
+                        mesh.isBasic = true;
+                        mesh.material = app3d.renderer3d.basicMaterial;
+                    } 
+                    else 
+                    {
+                        mesh.visible = false;
+                    }
+
+                    currentlyHidden.push(key);
+                }
+            });
+
+            me.currentlyHidden = currentlyHidden;
+
+            $("#search_popup").fadeOut();
+        });
+
         me.addBaysControl();
         me.addHouseControl();
         me.pauseControls(false);
-
     },
+
+    escapeRegExp :function (str) 
+    {
+        return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+    },
+
+    replaceAll : function(str, find, replace) 
+    {
+        return str.replace(new RegExp(this.escapeRegExp(find), 'g'), replace);
+    },
+
+    // added end 
 
     addBaysControl: function () {
         var key, j, lenJ, bayGroup,

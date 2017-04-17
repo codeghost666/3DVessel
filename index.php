@@ -12,6 +12,20 @@
         <!-- --------------------------
            Developed by www.saants.es
         --------------------------- -->
+        
+        <div id="search_popup">
+            <p>Input multiple container numbers with any delimiter</p>
+            <img src="system/images/close.png" id="btn_close">
+            <div id="search_body">
+                <div id="search_left">
+                    <textarea id="search_content"></textarea>
+                </div>
+                <div id="search_right">
+                    <input type="button" id="btn_apply_filter" value="Apply Filter">
+                    <input type="button" id="btn_clear_filter" value="Clear Filter">
+                </div>
+            </div>
+        </div>
         <div id="app-3d"" class="app3d-main-panel"
             data-gpu="It seems that your graphic card does not support WebGL. Without it we cannot show you the 3D Vessel Content.<br />Try using another browser."
             data-webgl="Your browser does not support WebGL. Without it we cannot show you the 3D Vessel Content.<br />Only for modern browsers & IE11+">
@@ -50,6 +64,9 @@
                 <select id="dropBays"></select>
             </div>   
             <div class="filtering">
+                <input type="button" value="Find Multiple Containers" id="btn_find_multi">
+            </div>
+            <div class="filtering">
                 <h3>Filter containers by:</h3>
                 <select id="dropFilter"></select>
                 <select id="dropFilterValue" disabled><option value=''>No filter</option></select>
@@ -83,33 +100,33 @@
 
 <?php /* *************************************************************** */
  
-require_once("../local_config.php");
-require_once(APP_INC_PATH."bootstrap_frontend.php");
-sessionsClass::site_protection(true,true,true,false,false);
+// require_once("../local_config.php");
+// require_once(APP_INC_PATH."bootstrap_frontend.php");
+// sessionsClass::site_protection(true,true,true,false,false);
 
-$userid = dbase::globalMagic($_SESSION['userid']);
+// $userid = dbase::globalMagic($_SESSION['userid']);
 
-$data = Admin::get_user($userid,false,'profile',true);
-if ($data !== false){
-    $username = dbase::globalMagic($data['username']);
-}
+// $data = Admin::get_user($userid,false,'profile',true);
+// if ($data !== false){
+//     $username = dbase::globalMagic($data['username']);
+// }
 
-//Query DB for username
-$sql_results ="SELECT attribute_key, attribute_value, hex_color FROM " . DB_NAME . ".viewer_user_colors WHERE username = '".$username."';";
+// //Query DB for username
+// $sql_results ="SELECT attribute_key, attribute_value, hex_color FROM " . DB_NAME . ".viewer_user_colors WHERE username = '".$username."';";
 
-//ALTER TABLE foobar_data MODIFY COLUMN col VARCHAR(255) NOT NULL DEFAULT '{}';
-$datagroup = dbase::globalQueryPlus($sql_results,$conn,2);
+// //ALTER TABLE foobar_data MODIFY COLUMN col VARCHAR(255) NOT NULL DEFAULT '{}';
+// $datagroup = dbase::globalQueryPlus($sql_results,$conn,2);
 
-$joiner = "___";
-$response;
+// $joiner = "___";
+// $response;
 
-if($datagroup[1]>0){
-	$looped = dbase::loop_to_array($datagroup[0]);
+// if($datagroup[1]>0){
+// 	$looped = dbase::loop_to_array($datagroup[0]);
 	
-	foreach($looped as $key=>$value){
-		$response[($looped[$key]['attribute_key']).$joiner.($looped[$key]['attribute_value'])] = $looped[$key]['hex_color'];
-	}
-}
+// 	foreach($looped as $key=>$value){
+// 		$response[($looped[$key]['attribute_key']).$joiner.($looped[$key]['attribute_value'])] = $looped[$key]['hex_color'];
+// 	}
+// }
 /* *************************************************************** */ ?>
 
         <script>

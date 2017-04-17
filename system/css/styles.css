@@ -283,7 +283,8 @@ canvas {
   .info-panel .filtering {
     background: #999999;
     color: #fff;
-    min-height: 80px; }
+    /*min-height: 80px; */
+    }
     .info-panel .filtering label {
       font-size: 12px;
       font-style: italic; }
@@ -547,3 +548,66 @@ canvas {
       border: 1px solid #0a0; }
       .printopts-container button.save:hover {
         background: #009100; }
+
+
+#search_popup
+{
+  position: absolute;
+  z-index: 99;
+  width: 400px;
+  height: 160px;
+  padding: 15px;
+  background-color: white;
+  border: 1px solid #002277;
+  right: 20px;
+  top : 405px;
+  display: none;
+}
+
+#search_popup p
+{
+  margin : 0px;
+  padding: 0px;
+  font-family: arial;
+  font-size: 13px;
+}
+
+#search_body
+{
+  margin-top: 5px;
+}
+
+#search_left
+{
+  width: 75%;
+  float: left;
+}
+
+#search_left textarea
+{
+  width: 95%;
+  height: 120px;
+}
+
+#search_right
+{
+  width: 25%;
+  float: left;
+}
+
+#search_right input
+{
+  width: 100px;
+  height: 25px;
+  margin-bottom: 5px;
+}
+
+#btn_close
+{
+  cursor: pointer;
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  top: 15px;
+  right: 15px;
+}
