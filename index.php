@@ -1,3 +1,12 @@
+<?php
+
+require_once("../local_config.php");
+require_once(APP_INC_PATH."bootstrap_frontend.php");
+sessionsClass::site_protection(true,true,true,false,false);
+
+?>
+
+
 <!DOCTYPE html>
 <html>
 	<head>
@@ -100,9 +109,7 @@
 
 <?php /* *************************************************************** */
  
-require_once("../local_config.php");
-require_once(APP_INC_PATH."bootstrap_frontend.php");
-sessionsClass::site_protection(true,true,true,false,false);
+
 
 $userid = dbase::globalMagic($_SESSION['userid']);
 
